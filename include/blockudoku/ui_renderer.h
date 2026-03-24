@@ -11,6 +11,8 @@
 #include "bn_unique_ptr.h"
 #include "bn_vector.h"
 
+#include "blockudoku/gameplay_feedback.h"
+
 namespace blockudoku
 {
 
@@ -71,11 +73,7 @@ private:
     int _loaded_block_style = -1;
     int _palette_style = 0;
     int _loaded_palette_style = -1;
-    int _shake_frames = 0;
-    int _clear_popup_frames = 0;
-    int _last_cleared_cells = 0;
-    int _careful_popup_frames = 0;
-    bool _careful_condition_previous = false;
+    gameplay_feedback _feedback;
 
     void build_static_bg();
     void rebuild_ui_bg();

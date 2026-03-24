@@ -4,7 +4,7 @@
 #include "blockudoku/game_audio.h"
 #include "blockudoku/game_state.h"
 #include "blockudoku/high_scores.h"
-#include "blockudoku/hint_solver.h"
+#include "blockudoku/hint_service.h"
 #include "blockudoku/input_controller.h"
 #include "blockudoku/ui_renderer.h"
 
@@ -52,9 +52,7 @@ private:
     int _block_style = 0;
     int _palette_style = 0;
     bool _assist_enabled = false;
-    int _hint_solver_step_budget = 32;
-    hint_search_task _hint_task;
-    bool _manual_hint_pending = false;
+    hint_service _hint_service;
     char _initials[3] = { 'A', 'A', 'A' };
     int _initials_index = 0;
     int _pending_score = 0;
@@ -68,9 +66,6 @@ private:
     void update_enter_initials();
     void update_high_scores();
     void update_credits();
-    [[nodiscard]] game_event run_assist_step();
-    void cancel_hint_search();
-    [[nodiscard]] bool try_apply_finished_hint(game_event& event);
     void start_game();
 };
 

@@ -223,12 +223,12 @@ namespace blockudoku
             if(bn::keypad::select_pressed())
             {
                 _state.reset();
-                cancel_hint_search();
+                _hint_service.reset();
                 event = { game_event_type::reset, 0 };
             }
             else
             {
-                event = run_assist_step();
+                event = _hint_service.run_assist_step(_state);
             }
         }
         else
@@ -237,20 +237,14 @@ namespace blockudoku
 
             if(event.type == game_event_type::hint_requested)
             {
-                _hint_task.begin(_state);
-                _manual_hint_pending = true;
+                _hint_service.request_manual(_state);
             }
-            else if(_manual_hint_pending && event.type != game_event_type::none)
+            else if(event.type != game_event_type::none)
             {
-                cancel_hint_search();
+                _hint_service.cancel_manual();
             }
 
-            if(_manual_hint_pending && _hint_task.active())
-            {
-                _hint_task.step(_hint_solver_step_budget);
-                const bool hint_applied = try_apply_finished_hint(event);
-                (void) hint_applied;
-            }
+            _hint_service.update_manual(_state, event);
         }
 
         if(event.cleared_cells > 0)
@@ -343,64 +337,10 @@ namespace blockudoku
         _renderer.render_credits();
     }
 
-    game_event game_app::run_assist_step()
-    {
-        if(_state.game_over())
-        {
-            return { game_event_type::none, 0 };
-        }
-
-        if(! _hint_task.active())
-        {
-            _hint_task.begin(_state);
-            return { game_event_type::none, 0 };
-        }
-
-        _hint_task.step(_hint_solver_step_budget);
-        if(! _hint_task.finished())
-        {
-            return { game_event_type::none, 0 };
-        }
-
-        game_event event = { game_event_type::none, 0 };
-        if(! try_apply_finished_hint(event))
-        {
-            return { game_event_type::none, 0 };
-        }
-
-        return _state.try_place_selected();
-    }
-
-    void game_app::cancel_hint_search()
-    {
-        _hint_task.cancel();
-        _manual_hint_pending = false;
-    }
-
-    bool game_app::try_apply_finished_hint(game_event& event)
-    {
-        if(! _hint_task.finished())
-        {
-            return false;
-        }
-
-        const hint_move best_move = _hint_task.best_move();
-        cancel_hint_search();
-
-        if(! best_move.valid ||
-           ! _state.apply_hint_move(best_move.slot_index, best_move.base_x, best_move.base_y))
-        {
-            return false;
-        }
-
-        event = { game_event_type::slot_changed, 0 };
-        return true;
-    }
-
     void game_app::start_game()
     {
         _state.reset();
-        cancel_hint_search();
+        _hint_service.reset();
         _scene = scene::playing;
     }
 }
