@@ -15,10 +15,15 @@ A Blockudoku-inspired puzzle game built for Game Boy Advance using [Butano](http
 
 ## Screenshots
 
+### Title / Menu
+
+![Title Screen](screenshots/title.png)
+
 ### Board / UI
 
 ![Board 1](screenshots/board1.png)
 ![Board 2](screenshots/board2.png)
+![Multiple Block Types](screenshots/multiple_block_types.png)
 
 ### Gameplay Feedback
 
@@ -34,6 +39,11 @@ A Blockudoku-inspired puzzle game built for Game Boy Advance using [Butano](http
 ### Initials Entry
 
 ![Enter Initials](screenshots/enter_initials.png)
+
+### High Scores / Credits
+
+![High Scores](screenshots/highscores.png)
+![Credits](screenshots/credits.png)
 
 ## Requirements
 
