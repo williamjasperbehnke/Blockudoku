@@ -5,12 +5,12 @@
 #---------------------------------------------------------------------------------------------------------------------
 TARGET          :=  $(notdir $(CURDIR))
 BUILD           :=  build
-LIBBUTANO       :=  ../gba_development/butano/butano
+LIBBUTANO       :=  third_party/butano/butano
 PYTHON          :=  python
 SOURCES         :=  src src/blockudoku
-INCLUDES        :=  include ../gba_development/butano/common/include
+INCLUDES        :=  include third_party/butano/common/include
 DATA            :=
-GRAPHICS        :=  graphics ../gba_development/butano/common/graphics
+GRAPHICS        :=  graphics third_party/butano/common/graphics
 AUDIO           :=  audio
 AUDIOBACKEND    :=  maxmod
 AUDIOTOOL       :=
