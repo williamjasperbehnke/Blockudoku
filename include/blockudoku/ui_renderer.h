@@ -11,8 +11,6 @@
 #include "bn_unique_ptr.h"
 #include "bn_vector.h"
 
-#include "blockudoku/game_event.h"
-
 namespace blockudoku
 {
 
@@ -27,7 +25,6 @@ public:
 
     ui_renderer();
 
-    void set_last_event(const game_event& event);
     void set_block_style(int block_style);
     void set_palette_style(int palette_style);
 
@@ -64,9 +61,8 @@ private:
     bn::optional<bn::regular_bg_ptr> _ui_bg;
     bn::optional<bn::regular_bg_map_ptr> _ui_bg_map_ptr;
     bn::sprite_text_generator _text_generator;
-    bn::sprite_text_generator _accent_generator;
+    bn::sprite_text_generator _selected_tray_generator;
     bn::vector<bn::sprite_ptr, 120> _text_sprites;
-    game_event _last_event;
     scene_bg_type _scene_bg_type = scene_bg_type::none;
     int _block_style = 0;
     int _loaded_block_style = -1;
@@ -83,7 +79,8 @@ private:
 
     void draw_tray(const game_state& state);
 
-    void draw_controls(const game_state& state);
+    void set_ui_cell(int map_x, int map_y, int tile_index);
+    void clear_ui_region(int left, int top, int right, int bottom);
     void clear_ui_map();
     void commit_frame();
     void draw_title_blocks();

@@ -29,17 +29,45 @@ namespace blockudoku
 {
     namespace
     {
-        constexpr int board_bg_left = 4;
-        constexpr int board_bg_top = 11;
+        constexpr int board_bg_left = 2;
+        constexpr int board_bg_top = 7;
+        constexpr int board_cell_tiles = 2;
 
         constexpr int tray_bg_left = 21;
-        constexpr int tray_bg_top = 11;
+        constexpr int tray_bg_top = 13;
 
         constexpr int tile_empty = 0;
         constexpr int tile_tan = 1;
         constexpr int tile_blue = 2;
         constexpr int tile_red = 3;
         constexpr int tile_green = 4;
+
+        constexpr int tile16_tan_base = 5;
+        constexpr int tile16_blue_base = 9;
+        constexpr int tile16_red_base = 13;
+        constexpr int tile16_green_base = 17;
+
+        constexpr bn::array<bn::color, 16> selected_tray_text_colors = {
+            bn::color(0, 31, 0),   // Transparency key.
+            bn::color(16, 24, 31), // Bright blue face.
+            bn::color(2, 5, 17),   // Deep blue shadow.
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17),
+            bn::color(2, 5, 17)
+        };
+
+        constexpr bn::sprite_palette_item selected_tray_text_palette_item(
+            selected_tray_text_colors, bn::bpp_mode::BPP_4);
     }
 
     ui_renderer::ui_bg_map::ui_bg_map() :
@@ -51,16 +79,11 @@ namespace blockudoku
     ui_renderer::ui_renderer() :
         _ui_bg_map(new ui_bg_map()),
         _text_generator(common::fixed_8x8_sprite_font),
-        _accent_generator(common::fixed_8x8_sprite_font)
+        _selected_tray_generator(common::fixed_8x8_sprite_font, selected_tray_text_palette_item)
     {
         _text_generator.set_left_alignment();
-        _accent_generator.set_left_alignment();
+        _selected_tray_generator.set_left_alignment();
         build_static_bg();
-    }
-
-    void ui_renderer::set_last_event(const game_event& event)
-    {
-        _last_event = event;
     }
 
     void ui_renderer::set_block_style(int block_style)
@@ -106,7 +129,6 @@ namespace blockudoku
         draw_header(state);
         draw_board(state);
         draw_tray(state);
-        draw_controls(state);
 
         commit_frame();
     }
@@ -120,42 +142,40 @@ namespace blockudoku
         set_palette_style(palette_style);
         draw_title_blocks();
 
-        _accent_generator.generate(-104, -68, "BLOCKUDOKU", _text_sprites);
-        _text_generator.generate(-104, -52, "GBA EDITION", _text_sprites);
+        _text_generator.generate(-104, -52, "BLOCKUDOKU", _text_sprites);
+        _text_generator.generate(-104, -36, "GBA EDITION", _text_sprites);
 
-        _accent_generator.generate(-104, -28, "MENU", _text_sprites);
-        _text_generator.generate(-104, -18, menu_index == 0 ? "> START GAME" : "  START GAME", _text_sprites);
-        _text_generator.generate(-104, -8, menu_index == 1 ? "> HIGH SCORES" : "  HIGH SCORES", _text_sprites);
-        _text_generator.generate(-104, 2, menu_index == 2 ? "> CREDITS" : "  CREDITS", _text_sprites);
+        _text_generator.generate(-104, -12, "MENU", _text_sprites);
+        _text_generator.generate(-104, -2, menu_index == 0 ? "> START GAME" : "  START GAME", _text_sprites);
+        _text_generator.generate(-104, 8, menu_index == 1 ? "> HIGH SCORES" : "  HIGH SCORES", _text_sprites);
+        _text_generator.generate(-104, 18, menu_index == 2 ? "> CREDITS" : "  CREDITS", _text_sprites);
         
-        _accent_generator.generate(34, -61, "OPTIONS", _text_sprites);
-        _text_generator.generate(34, -49, menu_index == 3 ? "> SFX" : "  SFX", _text_sprites);
+        _text_generator.generate(34, -45, "OPTIONS", _text_sprites);
+        _text_generator.generate(34, -33, menu_index == 3 ? "> SFX" : "  SFX", _text_sprites);
         bn::string<16> sfx_text("  ");
         sfx_text += bn::to_string<4>(sfx_volume_percent);
         sfx_text += "%";
-        _text_generator.generate(34, -39, sfx_text, _text_sprites);
-        _text_generator.generate(34, -25, menu_index == 4 ? "> MUSIC" : "  MUSIC", _text_sprites);
+        _text_generator.generate(34, -23, sfx_text, _text_sprites);
+        _text_generator.generate(34, -9, menu_index == 4 ? "> MUSIC" : "  MUSIC", _text_sprites);
         bn::string<16> music_text("  ");
         music_text += bn::to_string<4>(music_volume_percent);
         music_text += "%";
-        _text_generator.generate(34, -15, music_text, _text_sprites);
-        _text_generator.generate(34, -1, menu_index == 5 ? "> BLOCKS" : "  BLOCKS", _text_sprites);
-        _text_generator.generate(34, 9, block_style_label(), _text_sprites);
-        _text_generator.generate(34, 23, menu_index == 6 ? "> PALETTE" : "  PALETTE", _text_sprites);
-        _text_generator.generate(34, 33, palette_style_label(), _text_sprites);
+        _text_generator.generate(34, 1, music_text, _text_sprites);
+        _text_generator.generate(34, 15, menu_index == 5 ? "> BLOCKS" : "  BLOCKS", _text_sprites);
+        _text_generator.generate(34, 25, block_style_label(), _text_sprites);
+        _text_generator.generate(34, 39, menu_index == 6 ? "> PALETTE" : "  PALETTE", _text_sprites);
+        _text_generator.generate(34, 49, palette_style_label(), _text_sprites);
 
         const auto& entries = scores.entries();
-        _accent_generator.generate(-104, 24, "BEST", _text_sprites);
+        _text_generator.generate(-104, 40, "BEST", _text_sprites);
         bn::string<32> best_text;
         best_text += entries[0].initials[0];
         best_text += entries[0].initials[1];
         best_text += entries[0].initials[2];
         best_text += " ";
         best_text += bn::to_string<10>(entries[0].score);
-        _text_generator.generate(-104, 34, best_text, _text_sprites);
+        _text_generator.generate(-104, 50, best_text, _text_sprites);
 
-        _text_generator.generate(-104, 57, "UP/DOWN SELECT  L/R ADJUST", _text_sprites);
-        _text_generator.generate(-104, 67, "A INC/CONFIRM  B DEC", _text_sprites);
         commit_frame();
     }
 
@@ -165,7 +185,7 @@ namespace blockudoku
         clear_ui_map();
         _text_sprites.clear();
 
-        _accent_generator.generate(-88, -58, "HIGH SCORES", _text_sprites);
+        _text_generator.generate(-88, -58, "HIGH SCORES", _text_sprites);
         const auto& entries = scores.entries();
 
         for(int index = 0; index < high_scores::entries_count; ++index)
@@ -192,10 +212,10 @@ namespace blockudoku
         clear_ui_map();
         _text_sprites.clear();
 
-        _accent_generator.generate(-88, -58, "CREDITS", _text_sprites);
+        _text_generator.generate(-88, -58, "CREDITS", _text_sprites);
         _text_generator.generate(-88, -38, "BLOCKUDOKU GBA", _text_sprites);
         _text_generator.generate(-88, -28, "DESIGN + CODE", _text_sprites);
-        _accent_generator.generate(-88, -18, "WILLIAM BEHNKE", _text_sprites);
+        _text_generator.generate(-88, -18, "WILLIAM BEHNKE", _text_sprites);
 
         _text_generator.generate(-88, 2, "ENGINE: BUTANO", _text_sprites);
         _text_generator.generate(-88, 12, "PLATFORM: GAME BOY ADV", _text_sprites);
@@ -213,12 +233,12 @@ namespace blockudoku
         clear_ui_map();
         _text_sprites.clear();
 
-        _accent_generator.generate(-88, -58, "NEW HIGH SCORE", _text_sprites);
+        _text_generator.generate(-88, -58, "NEW HIGH SCORE", _text_sprites);
         bn::string<24> score_text("SCORE ");
         score_text += bn::to_string<12>(score);
         _text_generator.generate(-88, -42, score_text, _text_sprites);
 
-        _accent_generator.generate(-88, -16, "ENTER INITIALS", _text_sprites);
+        _text_generator.generate(-88, -16, "ENTER INITIALS", _text_sprites);
         bn::string<16> initials_text;
         initials_text += initials[0];
         initials_text += ' ';
@@ -228,7 +248,7 @@ namespace blockudoku
         _text_generator.generate(-88, 0, initials_text, _text_sprites);
 
         const int cursor_x = -88 + (selected_index * 16);
-        _accent_generator.generate(cursor_x, 10, "^", _text_sprites);
+        _text_generator.generate(cursor_x, 10, "^", _text_sprites);
 
         _text_generator.generate(-88, 54, "UP/DOWN LETTER", _text_sprites);
         _text_generator.generate(-88, 64, "L/R POS  A SAVE", _text_sprites);
@@ -249,38 +269,13 @@ namespace blockudoku
         _gameplay_bg->set_priority(3);
         _gameplay_bg->set_visible(false);
 
-        for(int y = 0; y < ui_bg_map::rows; ++y)
-        {
-            for(int x = 0; x < ui_bg_map::columns; ++x)
-            {
-                bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)]);
-                info.set_tile_index(tile_empty);
-                info.set_palette_id(0);
-                _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)] = info.cell();
-            }
-        }
-
-        for(int y = board_bg_top - 1; y <= board_bg_top + 9; ++y)
-        {
-            for(int x = board_bg_left - 1; x <= board_bg_left + 9; ++x)
-            {
-                bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)]);
-                info.set_tile_index(tile_empty);
-                info.set_palette_id(0);
-                _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)] = info.cell();
-            }
-        }
-
-        for(int y = tray_bg_top - 1; y <= tray_bg_top + 11; ++y)
-        {
-            for(int x = tray_bg_left - 1; x <= tray_bg_left + 10; ++x)
-            {
-                bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)]);
-                info.set_tile_index(tile_empty);
-                info.set_palette_id(0);
-                _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)] = info.cell();
-            }
-        }
+        clear_ui_region(0, 0, ui_bg_map::columns - 1, ui_bg_map::rows - 1);
+        clear_ui_region(
+            board_bg_left - 1,
+            board_bg_top - 1,
+            board_bg_left + (game_state::board_size * board_cell_tiles),
+            board_bg_top + (game_state::board_size * board_cell_tiles));
+        clear_ui_region(tray_bg_left - 1, tray_bg_top - 1, tray_bg_left + 9, tray_bg_top + 11);
 
         rebuild_ui_bg();
     }
@@ -365,16 +360,53 @@ namespace blockudoku
     {
         bn::string<20> score_text("SCORE ");
         score_text += bn::to_string<12>(state.score());
-        _text_generator.generate(-116, -74, score_text, _text_sprites);
+        _text_generator.generate(38, -68, score_text, _text_sprites);
 
         bn::string<20> moves_text("MOVES ");
         moves_text += bn::to_string<12>(state.moves_available());
-        _text_generator.generate(28, -74, moves_text, _text_sprites);
+        _text_generator.generate(38, -56, moves_text, _text_sprites);
     }
 
     void ui_renderer::draw_board(const game_state& state)
     {
         bool green_highlight[game_state::board_size][game_state::board_size] = {};
+
+        const auto tile16_base = [&](int tile_index) -> int
+        {
+            switch(tile_index)
+            {
+                case tile_tan:
+                    return tile16_tan_base;
+                case tile_blue:
+                    return tile16_blue_base;
+                case tile_red:
+                    return tile16_red_base;
+                case tile_green:
+                    return tile16_green_base;
+                default:
+                    return -1;
+            }
+        };
+
+        const auto draw_scaled_board_cell = [&](int board_x, int board_y, int tile_index)
+        {
+            const int map_base_x = board_bg_left + (board_x * board_cell_tiles);
+            const int map_base_y = board_bg_top + (board_y * board_cell_tiles);
+            const int tile16 = tile16_base(tile_index);
+
+            for(int cell_y = 0; cell_y < board_cell_tiles; ++cell_y)
+            {
+                for(int cell_x = 0; cell_x < board_cell_tiles; ++cell_x)
+                {
+                    int final_tile = tile_empty;
+                    if(tile16 >= 0)
+                    {
+                        final_tile = tile16 + (cell_y * 2) + cell_x;
+                    }
+                    set_ui_cell(map_base_x + cell_x, map_base_y + cell_y, final_tile);
+                }
+            }
+        };
 
         if(state.slot_active(state.selected_slot()) && state.can_place_selected_at_cursor())
         {
@@ -475,21 +507,13 @@ namespace blockudoku
         {
             for(int x = 0; x < game_state::board_size; ++x)
             {
-                const int map_x = board_bg_left + x;
-                const int map_y = board_bg_top + y;
-                bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)]);
-
                 int board_tile = tile_empty;
 
                 if(state.board_cell(x, y))
                 {
                     board_tile = green_highlight[y][x] ? tile_green : tile_tan;
                 }
-
-                info.set_tile_index(board_tile);
-                info.set_palette_id(0);
-
-                _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)] = info.cell();
+                draw_scaled_board_cell(x, y, board_tile);
             }
         }
 
@@ -507,10 +531,6 @@ namespace blockudoku
                         const int board_x = state.cursor_x() + x;
                         const int board_y = state.cursor_y() + y;
 
-                        const int map_x = board_bg_left + board_x;
-                        const int map_y = board_bg_top + board_y;
-                        bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)]);
-
                         int preview_tile = tile_blue;
 
                         if(valid && green_highlight[board_y][board_x])
@@ -521,10 +541,7 @@ namespace blockudoku
                         {
                             preview_tile = tile_red;
                         }
-
-                        info.set_tile_index(preview_tile);
-                        info.set_palette_id(0);
-                        _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)] = info.cell();
+                        draw_scaled_board_cell(board_x, board_y, preview_tile);
                     }
                 }
             }
@@ -533,7 +550,7 @@ namespace blockudoku
 
     void ui_renderer::draw_tray(const game_state& state)
     {
-        _accent_generator.generate(36, -56, "NEXT", _text_sprites);
+        _text_generator.generate(52, -32, "NEXT", _text_sprites);
 
         for(int slot = 0; slot < game_state::slot_count; ++slot)
         {
@@ -549,7 +566,6 @@ namespace blockudoku
                 {
                     const int map_x = preview_left + x;
                     const int map_y = slot_bg_y + y;
-                    bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)]);
 
                     const bool active = state.slot_active(slot);
                     const bool filled = active && x < piece.width && y < piece.height && piece_library::cell(piece, x, y);
@@ -571,38 +587,43 @@ namespace blockudoku
                         }
                     }
 
-                    info.set_tile_index(tile_index);
-                    info.set_palette_id(0);
-                    _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)] = info.cell();
+                    set_ui_cell(map_x, map_y, tile_index);
                 }
             }
-        }
-    }
 
-    void ui_renderer::draw_controls(const game_state& state)
-    {
-        _text_generator.generate(-116, 62, "A PLACE  L/R NEXT", _text_sprites);
-
-        if(state.game_over())
-        {
-            _text_generator.generate(-116, 72, "START RESET", _text_sprites);
-        }
-        else
-        {
-            _text_generator.generate(-116, 72, "SELECT RESET", _text_sprites);
+            bn::string<4> label;
+            label += bn::to_string<2>(slot + 1);
+            if(selected)
+            {
+                _selected_tray_generator.generate(92, -8 + (slot * 32), label, _text_sprites);
+            }
+            else
+            {
+                _text_generator.generate(92, -8 + (slot * 32), label, _text_sprites);
+            }
         }
     }
 
     void ui_renderer::clear_ui_map()
     {
-        for(int y = 0; y < ui_bg_map::rows; ++y)
+        clear_ui_region(0, 0, ui_bg_map::columns - 1, ui_bg_map::rows - 1);
+    }
+
+    void ui_renderer::set_ui_cell(int map_x, int map_y, int tile_index)
+    {
+        bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)]);
+        info.set_tile_index(tile_index);
+        info.set_palette_id(0);
+        _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)] = info.cell();
+    }
+
+    void ui_renderer::clear_ui_region(int left, int top, int right, int bottom)
+    {
+        for(int y = top; y <= bottom; ++y)
         {
-            for(int x = 0; x < ui_bg_map::columns; ++x)
+            for(int x = left; x <= right; ++x)
             {
-                bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)]);
-                info.set_tile_index(tile_empty);
-                info.set_palette_id(0);
-                _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(x, y)] = info.cell();
+                set_ui_cell(x, y, tile_empty);
             }
         }
     }
@@ -618,7 +639,7 @@ namespace blockudoku
     void ui_renderer::draw_title_blocks()
     {
         constexpr int base_x = 14;
-        constexpr int base_y = 7;
+        constexpr int base_y = 9;
         constexpr int shape[6][3] = {
             // x, y, tile
             { 0, 0, tile_tan },
@@ -633,10 +654,7 @@ namespace blockudoku
         {
             const int map_x = base_x + part[0];
             const int map_y = base_y + part[1];
-            bn::regular_bg_map_cell_info info(_ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)]);
-            info.set_tile_index(part[2]);
-            info.set_palette_id(0);
-            _ui_bg_map->cells[_ui_bg_map->map_item.cell_index(map_x, map_y)] = info.cell();
+            set_ui_cell(map_x, map_y, part[2]);
         }
     }
 

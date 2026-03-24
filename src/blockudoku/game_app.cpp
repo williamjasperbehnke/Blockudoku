@@ -6,15 +6,38 @@ namespace blockudoku
 {
     namespace
     {
+        constexpr int max_volume_step = 10;
+        constexpr int volume_step_count = max_volume_step + 1;
+        constexpr bn::fixed music_volume_scale = bn::fixed(3) / 10;
+
         [[nodiscard]] int wrap_index(int value, int count)
         {
             return (value % count + count) % count;
         }
 
+        [[nodiscard]] int percent_from_step(int volume_step)
+        {
+            return volume_step * 10;
+        }
+
+        [[nodiscard]] bn::fixed normalized_volume_from_step(int volume_step)
+        {
+            return bn::fixed(volume_step) / max_volume_step;
+        }
+
         [[nodiscard]] bn::fixed mapped_music_volume(int music_volume_step)
         {
-            const int music_percent = music_volume_step * 10;
-            return (music_percent / 100.0) * (3.0 / 10.0);
+            return normalized_volume_from_step(music_volume_step) * music_volume_scale;
+        }
+
+        [[nodiscard]] bool confirm_pressed()
+        {
+            return bn::keypad::a_pressed() || bn::keypad::start_pressed();
+        }
+
+        [[nodiscard]] bool cancel_pressed()
+        {
+            return bn::keypad::b_pressed() || bn::keypad::select_pressed();
         }
     }
 
@@ -22,7 +45,7 @@ namespace blockudoku
     {
         if(! _audio_initialized)
         {
-            _audio.set_sfx_volume(_sfx_volume_step / 10.0);
+            _audio.set_sfx_volume(normalized_volume_from_step(_sfx_volume_step));
             _audio.set_music_volume(mapped_music_volume(_music_volume_step));
             _audio_initialized = true;
         }
@@ -43,12 +66,12 @@ namespace blockudoku
         switch(static_cast<menu_entry>(_menu_index))
         {
             case menu_entry::sfx_volume:
-                _sfx_volume_step = wrap_index(_sfx_volume_step + delta, 11);
-                _audio.set_sfx_volume(_sfx_volume_step / 10.0);
+                _sfx_volume_step = wrap_index(_sfx_volume_step + delta, volume_step_count);
+                _audio.set_sfx_volume(normalized_volume_from_step(_sfx_volume_step));
                 break;
 
             case menu_entry::music_volume:
-                _music_volume_step = wrap_index(_music_volume_step + delta, 11);
+                _music_volume_step = wrap_index(_music_volume_step + delta, volume_step_count);
                 _audio.set_music_volume(mapped_music_volume(_music_volume_step));
                 break;
 
@@ -142,7 +165,7 @@ namespace blockudoku
             _audio.on_event({ game_event_type::placed, 0 });
         }
 
-        if(! option_adjusted && (bn::keypad::a_pressed() || bn::keypad::start_pressed()))
+        if(! option_adjusted && confirm_pressed())
         {
             switch(static_cast<menu_entry>(_menu_index))
             {
@@ -177,8 +200,8 @@ namespace blockudoku
         _renderer.render_main_menu(
             _high_scores,
             _menu_index,
-            _sfx_volume_step * 10,
-            _music_volume_step * 10,
+            percent_from_step(_sfx_volume_step),
+            percent_from_step(_music_volume_step),
             _block_style,
             _palette_style);
     }
@@ -188,7 +211,6 @@ namespace blockudoku
         _renderer.set_block_style(_block_style);
         _renderer.set_palette_style(_palette_style);
         const game_event event = _input.update(_state);
-        _renderer.set_last_event(event);
         _renderer.render(_state);
         _audio.on_event(event);
 
@@ -234,7 +256,7 @@ namespace blockudoku
             selected = selected == 'A' ? 'Z' : char(selected - 1);
         }
 
-        if(bn::keypad::a_pressed() || bn::keypad::start_pressed())
+        if(confirm_pressed())
         {
             if(_initials_index < 2)
             {
@@ -252,11 +274,11 @@ namespace blockudoku
 
     void game_app::update_high_scores()
     {
-        if(bn::keypad::a_pressed() || bn::keypad::start_pressed())
+        if(confirm_pressed())
         {
             start_game();
         }
-        else if(bn::keypad::b_pressed() || bn::keypad::select_pressed())
+        else if(cancel_pressed())
         {
             _scene = scene::menu;
         }
@@ -266,7 +288,7 @@ namespace blockudoku
 
     void game_app::update_credits()
     {
-        if(bn::keypad::b_pressed() || bn::keypad::select_pressed() || bn::keypad::a_pressed() || bn::keypad::start_pressed())
+        if(cancel_pressed() || confirm_pressed())
         {
             _scene = scene::menu;
         }
@@ -277,7 +299,6 @@ namespace blockudoku
     void game_app::start_game()
     {
         _state.reset();
-        _renderer.set_last_event({ game_event_type::none, 0 });
         _scene = scene::playing;
     }
 }
