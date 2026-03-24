@@ -133,7 +133,9 @@ namespace blockudoku
         commit_frame();
     }
 
-    void ui_renderer::render_main_menu(const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent, int block_style, int palette_style)
+    void ui_renderer::render_main_menu(
+            const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent,
+            int block_style, int palette_style, bool assist_enabled)
     {
         set_scene_background(scene_bg_type::title);
         clear_ui_map();
@@ -150,21 +152,23 @@ namespace blockudoku
         _text_generator.generate(-104, 8, menu_index == 1 ? "> HIGH SCORES" : "  HIGH SCORES", _text_sprites);
         _text_generator.generate(-104, 18, menu_index == 2 ? "> CREDITS" : "  CREDITS", _text_sprites);
         
-        _text_generator.generate(34, -45, "OPTIONS", _text_sprites);
-        _text_generator.generate(34, -33, menu_index == 3 ? "> SFX" : "  SFX", _text_sprites);
+        _text_generator.generate(34, -55, "OPTIONS", _text_sprites);
+        _text_generator.generate(34, -43, menu_index == 3 ? "> SFX" : "  SFX", _text_sprites);
         bn::string<16> sfx_text("  ");
         sfx_text += bn::to_string<4>(sfx_volume_percent);
         sfx_text += "%";
-        _text_generator.generate(34, -23, sfx_text, _text_sprites);
-        _text_generator.generate(34, -9, menu_index == 4 ? "> MUSIC" : "  MUSIC", _text_sprites);
+        _text_generator.generate(34, -33, sfx_text, _text_sprites);
+        _text_generator.generate(34, -19, menu_index == 4 ? "> MUSIC" : "  MUSIC", _text_sprites);
         bn::string<16> music_text("  ");
         music_text += bn::to_string<4>(music_volume_percent);
         music_text += "%";
-        _text_generator.generate(34, 1, music_text, _text_sprites);
-        _text_generator.generate(34, 15, menu_index == 5 ? "> BLOCKS" : "  BLOCKS", _text_sprites);
-        _text_generator.generate(34, 25, block_style_label(), _text_sprites);
-        _text_generator.generate(34, 39, menu_index == 6 ? "> PALETTE" : "  PALETTE", _text_sprites);
-        _text_generator.generate(34, 49, palette_style_label(), _text_sprites);
+        _text_generator.generate(34, -9, music_text, _text_sprites);
+        _text_generator.generate(34, 5, menu_index == 5 ? "> BLOCKS" : "  BLOCKS", _text_sprites);
+        _text_generator.generate(34, 15, block_style_label(), _text_sprites);
+        _text_generator.generate(34, 29, menu_index == 6 ? "> PALETTE" : "  PALETTE", _text_sprites);
+        _text_generator.generate(34, 39, palette_style_label(), _text_sprites);
+        _text_generator.generate(34, 53, menu_index == 7 ? "> ASSIST" : "  ASSIST", _text_sprites);
+        _text_generator.generate(34, 63, assist_enabled ? "  ON" : "  OFF", _text_sprites);
 
         const auto& entries = scores.entries();
         _text_generator.generate(-104, 40, "BEST", _text_sprites);

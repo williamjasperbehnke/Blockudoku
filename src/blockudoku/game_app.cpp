@@ -83,6 +83,10 @@ namespace blockudoku
                 _palette_style = wrap_index(_palette_style + delta, ui_renderer::palette_style_count);
                 break;
 
+            case menu_entry::assist:
+                _assist_enabled = ! _assist_enabled;
+                break;
+
             case menu_entry::start_game:
             case menu_entry::high_scores:
             case menu_entry::credits:
@@ -185,6 +189,7 @@ namespace blockudoku
                 case menu_entry::music_volume:
                 case menu_entry::blocks:
                 case menu_entry::palette:
+                case menu_entry::assist:
                     adjust_selected_option(1);
                     break;
 
@@ -203,14 +208,33 @@ namespace blockudoku
             percent_from_step(_sfx_volume_step),
             percent_from_step(_music_volume_step),
             _block_style,
-            _palette_style);
+            _palette_style,
+            _assist_enabled);
     }
 
     void game_app::update_playing()
     {
         _renderer.set_block_style(_block_style);
         _renderer.set_palette_style(_palette_style);
-        const game_event event = _input.update(_state);
+        game_event event = { game_event_type::none, 0 };
+
+        if(_assist_enabled)
+        {
+            if(bn::keypad::select_pressed())
+            {
+                _state.reset();
+                event = { game_event_type::reset, 0 };
+            }
+            else
+            {
+                event = run_assist_step();
+            }
+        }
+        else
+        {
+            event = _input.update(_state);
+        }
+
         _renderer.render(_state);
         _audio.on_event(event);
 
@@ -294,6 +318,21 @@ namespace blockudoku
         }
 
         _renderer.render_credits();
+    }
+
+    game_event game_app::run_assist_step()
+    {
+        if(_state.game_over())
+        {
+            return { game_event_type::none, 0 };
+        }
+
+        if(! _state.apply_hint())
+        {
+            return { game_event_type::none, 0 };
+        }
+
+        return _state.try_place_selected();
     }
 
     void game_app::start_game()

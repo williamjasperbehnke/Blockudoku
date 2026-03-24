@@ -49,6 +49,9 @@ public:
 
     [[nodiscard]] bool selected_piece_contains(int x, int y) const;
 
+    [[nodiscard]] bool apply_hint();
+    [[nodiscard]] bool cycle_hint_move();
+
     [[nodiscard]] int moves_available() const;
 
 private:

@@ -29,7 +29,9 @@ public:
     void set_palette_style(int palette_style);
 
     void render(const game_state& state);
-    void render_main_menu(const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent, int block_style, int palette_style);
+    void render_main_menu(
+            const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent,
+            int block_style, int palette_style, bool assist_enabled);
     void render_high_scores(const high_scores& scores);
     void render_credits();
     void render_initials_entry(int score, const char initials[3], int selected_index);

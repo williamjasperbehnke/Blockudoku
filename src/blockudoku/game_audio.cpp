@@ -58,6 +58,10 @@ namespace blockudoku
                 bn::sound_items::reload.play(0.55 * _sfx_volume);
                 break;
 
+            case game_event_type::hint_cycled:
+                bn::sound_items::reload.play(0.55 * _sfx_volume, 1.35, 0);
+                break;
+
             case game_event_type::placed:
                 bn::sound_items::cure.play(0.5 * _sfx_volume);
                 break;

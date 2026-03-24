@@ -9,6 +9,7 @@ enum class game_event_type
     none,
     cursor_moved,
     slot_changed,
+    hint_cycled,
     placed,
     invalid,
     cleared,

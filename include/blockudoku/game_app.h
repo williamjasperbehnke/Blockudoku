@@ -25,7 +25,8 @@ private:
         music_volume = 4,
         blocks = 5,
         palette = 6,
-        count = 7
+        assist = 7,
+        count = 8
     };
 
     enum class scene
@@ -49,6 +50,7 @@ private:
     bool _audio_initialized = false;
     int _block_style = 0;
     int _palette_style = 0;
+    bool _assist_enabled = false;
     char _initials[3] = { 'A', 'A', 'A' };
     int _initials_index = 0;
     int _pending_score = 0;
@@ -62,6 +64,7 @@ private:
     void update_enter_initials();
     void update_high_scores();
     void update_credits();
+    [[nodiscard]] game_event run_assist_step();
     void start_game();
 };
 

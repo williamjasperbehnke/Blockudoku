@@ -1,7 +1,10 @@
 #include "blockudoku/game_state.h"
 
 #include "bn_algorithm.h"
+#include "bn_array.h"
 #include "bn_assert.h"
+
+#include "blockudoku/hint_solver.h"
 
 namespace blockudoku
 {
@@ -211,6 +214,92 @@ namespace blockudoku
         }
 
         return piece_library::cell(piece, local_x, local_y);
+    }
+
+    bool game_state::apply_hint()
+    {
+        if(_game_over || ! has_any_move())
+        {
+            return false;
+        }
+
+        const hint_move best_move = hint_solver::find_best_move(*this);
+        if(! best_move.valid)
+        {
+            return false;
+        }
+
+        _selected_slot = best_move.slot_index;
+        _cursor_x = best_move.base_x;
+        _cursor_y = best_move.base_y;
+        clamp_cursor_to_selected_piece();
+        return true;
+    }
+
+    bool game_state::cycle_hint_move()
+    {
+        if(_game_over || ! has_any_move())
+        {
+            return false;
+        }
+
+        struct candidate_move
+        {
+            int slot = 0;
+            int x = 0;
+            int y = 0;
+        };
+
+        constexpr int max_candidates = slot_count * board_size * board_size;
+        bn::array<candidate_move, max_candidates> candidates = {};
+        int candidate_count = 0;
+
+        for(int slot_offset = 0; slot_offset < slot_count; ++slot_offset)
+        {
+            const int slot = (_selected_slot + slot_offset) % slot_count;
+            if(! slot_can_place(slot))
+            {
+                continue;
+            }
+
+            const piece_def& piece = piece_library::at(_slots[slot]);
+
+            for(int y = 0; y <= board_size - piece.height; ++y)
+            {
+                for(int x = 0; x <= board_size - piece.width; ++x)
+                {
+                    if(can_place(piece, x, y))
+                    {
+                        candidates[candidate_count++] = { slot, x, y };
+                    }
+                }
+            }
+        }
+
+        if(candidate_count == 0)
+        {
+            return false;
+        }
+
+        int current_index = -1;
+        for(int index = 0; index < candidate_count; ++index)
+        {
+            const candidate_move& candidate = candidates[index];
+            if(candidate.slot == _selected_slot && candidate.x == _cursor_x && candidate.y == _cursor_y)
+            {
+                current_index = index;
+                break;
+            }
+        }
+
+        const int next_index = current_index >= 0 ? (current_index + 1) % candidate_count : 0;
+        const candidate_move& next_move = candidates[next_index];
+
+        const bool changed = next_move.slot != _selected_slot || next_move.x != _cursor_x || next_move.y != _cursor_y;
+        _selected_slot = next_move.slot;
+        _cursor_x = next_move.x;
+        _cursor_y = next_move.y;
+        return changed;
     }
 
     int game_state::moves_available() const
