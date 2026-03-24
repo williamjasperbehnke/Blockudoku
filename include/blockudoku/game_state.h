@@ -28,6 +28,7 @@ public:
     [[nodiscard]] bool game_over() const;
 
     [[nodiscard]] int score() const;
+    [[nodiscard]] int combo_streak() const;
 
     [[nodiscard]] int cursor_x() const;
 
@@ -50,6 +51,7 @@ public:
     [[nodiscard]] bool selected_piece_contains(int x, int y) const;
 
     [[nodiscard]] bool apply_hint();
+    [[nodiscard]] bool apply_hint_move(int slot_index, int base_x, int base_y);
     [[nodiscard]] bool cycle_hint_move();
 
     [[nodiscard]] int moves_available() const;
@@ -62,6 +64,7 @@ private:
     int _cursor_y = 0;
     int _selected_slot = 0;
     int _score = 0;
+    int _combo_streak = 0;
     bool _game_over = false;
     bn::random _random;
 

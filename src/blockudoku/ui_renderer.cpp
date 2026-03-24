@@ -46,6 +46,12 @@ namespace blockudoku
         constexpr int tile16_blue_base = 9;
         constexpr int tile16_red_base = 13;
         constexpr int tile16_green_base = 17;
+        constexpr int clear_popup_duration_frames = 28;
+        constexpr int careful_popup_duration_frames = 44;
+        constexpr int careful_low_moves_threshold = 12;
+        constexpr int careful_fade_start_frames = 16;
+        constexpr int careful_fast_fade_start_frames = 8;
+        constexpr int big_clear_cells_threshold = 12;
 
         constexpr bn::array<bn::color, 16> selected_tray_text_colors = {
             bn::color(0, 31, 0),   // Transparency key.
@@ -83,6 +89,10 @@ namespace blockudoku
     {
         _text_generator.set_left_alignment();
         _selected_tray_generator.set_left_alignment();
+        _text_generator.set_bg_priority(0);
+        _selected_tray_generator.set_bg_priority(0);
+        _text_generator.set_z_order(-100);
+        _selected_tray_generator.set_z_order(-100);
         build_static_bg();
     }
 
@@ -120,6 +130,17 @@ namespace blockudoku
         }
     }
 
+    void ui_renderer::trigger_clear_feedback(int cleared_cells)
+    {
+        if(cleared_cells > 0)
+        {
+            const int frames = 4 + (cleared_cells / 2);
+            _shake_frames = frames < 12 ? frames : 12;
+            _clear_popup_frames = clear_popup_duration_frames;
+            _last_cleared_cells = cleared_cells;
+        }
+    }
+
     void ui_renderer::render(const game_state& state)
     {
         set_scene_background(scene_bg_type::gameplay);
@@ -129,6 +150,112 @@ namespace blockudoku
         draw_header(state);
         draw_board(state);
         draw_tray(state);
+
+        int active_slots = 0;
+        for(int slot = 0; slot < game_state::slot_count; ++slot)
+        {
+            if(state.slot_active(slot))
+            {
+                ++active_slots;
+            }
+        }
+
+        const bool show_careful_condition =
+                active_slots == game_state::slot_count && state.moves_available() <= careful_low_moves_threshold;
+
+        if(show_careful_condition && ! _careful_condition_previous)
+        {
+            _careful_popup_frames = careful_popup_duration_frames;
+        }
+
+        _careful_condition_previous = show_careful_condition;
+
+        if(_clear_popup_frames > 0)
+        {
+            const int age = clear_popup_duration_frames - _clear_popup_frames;
+            const int rise = age > 0 ? age / 4 : 0;
+            const int wobble = (age % 6 < 3) ? -1 : 1;
+            const int text_x = -40 + wobble;
+            const int text_y = -2 - rise;
+
+            if(state.combo_streak() > 1)
+            {
+                bn::string<20> combo_text("COMBO x");
+                combo_text += bn::to_string<4>(state.combo_streak());
+                _selected_tray_generator.generate(text_x + 1, text_y + 1, combo_text, _text_sprites);
+                _text_generator.generate(text_x, text_y, combo_text, _text_sprites);
+            }
+            else
+            {
+                const char* clear_text =
+                        _last_cleared_cells >= big_clear_cells_threshold ? "BIG CLEAR!" : "NICE CLEAR!";
+                _selected_tray_generator.generate(text_x + 1, text_y + 1, clear_text, _text_sprites);
+                _text_generator.generate(text_x, text_y, clear_text, _text_sprites);
+            }
+
+            --_clear_popup_frames;
+        }
+
+        if(_careful_popup_frames > 0)
+        {
+            const int age = careful_popup_duration_frames - _careful_popup_frames;
+            const int rise = age > 0 ? age / 6 : 0;
+            const int pulse = (age % 10 < 5) ? -1 : 1;
+            const int text_x = -58 + pulse;
+            const int text_y = 8 - rise;
+
+            bool visible = true;
+            if(_careful_popup_frames <= careful_fade_start_frames)
+            {
+                // Fade-out style: progressively blink before disappearing.
+                const int blink_divisor = _careful_popup_frames <= careful_fast_fade_start_frames ? 2 : 3;
+                visible = (age / blink_divisor) % 2 == 0;
+            }
+
+            if(visible)
+            {
+                _selected_tray_generator.generate(text_x + 1, text_y + 1, "CHOOSE CAREFULLY", _text_sprites);
+                _text_generator.generate(text_x, text_y, "CHOOSE CAREFULLY", _text_sprites);
+            }
+
+            --_careful_popup_frames;
+        }
+
+        if(_shake_frames > 0)
+        {
+            const int shake_x = (_shake_frames % 2 == 0) ? 1 : -1;
+            const int shake_y = (_shake_frames % 3 == 0) ? 1 : 0;
+
+            if(_gameplay_bg)
+            {
+                _gameplay_bg->set_position(shake_x, shake_y);
+            }
+
+            if(_ui_bg)
+            {
+                _ui_bg->set_position(shake_x, shake_y);
+            }
+
+            for(bn::sprite_ptr& sprite : _text_sprites)
+            {
+                sprite.set_x(sprite.x() + shake_x);
+                sprite.set_y(sprite.y() + shake_y);
+            }
+
+            --_shake_frames;
+        }
+        else
+        {
+            if(_gameplay_bg)
+            {
+                _gameplay_bg->set_position(0, 0);
+            }
+
+            if(_ui_bg)
+            {
+                _ui_bg->set_position(0, 0);
+            }
+        }
 
         commit_frame();
     }
@@ -332,6 +459,25 @@ namespace blockudoku
 
     void ui_renderer::set_scene_background(scene_bg_type type)
     {
+        if(type != scene_bg_type::gameplay)
+        {
+            _shake_frames = 0;
+            _clear_popup_frames = 0;
+            _last_cleared_cells = 0;
+            _careful_popup_frames = 0;
+            _careful_condition_previous = false;
+
+            if(_gameplay_bg)
+            {
+                _gameplay_bg->set_position(0, 0);
+            }
+
+            if(_ui_bg)
+            {
+                _ui_bg->set_position(0, 0);
+            }
+        }
+
         if(_scene_bg_type == type)
         {
             return;

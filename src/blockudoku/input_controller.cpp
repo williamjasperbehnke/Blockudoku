@@ -25,9 +25,9 @@ namespace blockudoku
             return { game_event_type::none, 0 };
         }
 
-        if(bn::keypad::start_pressed() && state.apply_hint())
+        if(bn::keypad::start_pressed())
         {
-            return { game_event_type::slot_changed, 0 };
+            return { game_event_type::hint_requested, 0 };
         }
 
         if(bn::keypad::b_pressed() && state.cycle_hint_move())

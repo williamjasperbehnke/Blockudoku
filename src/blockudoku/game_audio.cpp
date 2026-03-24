@@ -54,6 +54,10 @@ namespace blockudoku
 
         switch(event.type)
         {
+            case game_event_type::hint_requested:
+                bn::sound_items::reload.play(0.35 * _sfx_volume, 0.9, 0);
+                break;
+
             case game_event_type::slot_changed:
                 bn::sound_items::reload.play(0.55 * _sfx_volume);
                 break;

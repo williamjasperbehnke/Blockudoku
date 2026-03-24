@@ -28,6 +28,7 @@ namespace blockudoku
         _cursor_y = 0;
         _selected_slot = 0;
         _score = 0;
+        _combo_streak = 0;
         clamp_cursor_to_selected_piece();
         _game_over = ! has_any_move();
     }
@@ -126,7 +127,21 @@ namespace blockudoku
 
         clamp_cursor_to_selected_piece();
 
-        _score += piece.cell_count + (cleared_cells * 5);
+        int combo_bonus = 0;
+        if(cleared_cells > 0)
+        {
+            ++_combo_streak;
+            if(_combo_streak > 1)
+            {
+                combo_bonus = cleared_cells * _combo_streak * 2;
+            }
+        }
+        else
+        {
+            _combo_streak = 0;
+        }
+
+        _score += piece.cell_count + (cleared_cells * 5) + combo_bonus;
 
         if(! has_any_move())
         {
@@ -150,6 +165,11 @@ namespace blockudoku
     int game_state::score() const
     {
         return _score;
+    }
+
+    int game_state::combo_streak() const
+    {
+        return _combo_streak;
     }
 
     int game_state::cursor_x() const
@@ -232,6 +252,36 @@ namespace blockudoku
         _selected_slot = best_move.slot_index;
         _cursor_x = best_move.base_x;
         _cursor_y = best_move.base_y;
+        clamp_cursor_to_selected_piece();
+        return true;
+    }
+
+    bool game_state::apply_hint_move(int slot_index, int base_x, int base_y)
+    {
+        if(_game_over || ! has_any_move())
+        {
+            return false;
+        }
+
+        if(slot_index < 0 || slot_index >= slot_count)
+        {
+            return false;
+        }
+
+        if(! slot_can_place(slot_index))
+        {
+            return false;
+        }
+
+        const piece_def& piece = piece_library::at(_slots[slot_index]);
+        if(! can_place(piece, base_x, base_y))
+        {
+            return false;
+        }
+
+        _selected_slot = slot_index;
+        _cursor_x = base_x;
+        _cursor_y = base_y;
         clamp_cursor_to_selected_piece();
         return true;
     }

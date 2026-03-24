@@ -7,6 +7,7 @@ namespace blockudoku
 enum class game_event_type
 {
     none,
+    hint_requested,
     cursor_moved,
     slot_changed,
     hint_cycled,
