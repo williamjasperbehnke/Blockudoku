@@ -18,6 +18,9 @@ namespace blockudoku
 
 class game_state;
 class high_scores;
+class gameplay_screen_renderer;
+class menu_screen_renderer;
+class info_screen_renderer;
 
 class ui_renderer
 {
@@ -37,9 +40,14 @@ public:
             int block_style, int palette_style, bool assist_enabled);
     void render_high_scores(const high_scores& scores);
     void render_credits();
+    void render_seed_entry(const char seed_digits[8], int selected_index);
     void render_initials_entry(int score, const char initials[3], int selected_index);
 
 private:
+    friend class gameplay_screen_renderer;
+    friend class menu_screen_renderer;
+    friend class info_screen_renderer;
+
     enum class scene_bg_type
     {
         none,
@@ -79,17 +87,10 @@ private:
     void rebuild_ui_bg();
     void set_scene_background(scene_bg_type type);
 
-    void draw_header(const game_state& state);
-
-    void draw_board(const game_state& state);
-
-    void draw_tray(const game_state& state);
-
     void set_ui_cell(int map_x, int map_y, int tile_index);
     void clear_ui_region(int left, int top, int right, int bottom);
     void clear_ui_map();
     void commit_frame();
-    void draw_title_blocks();
 
     [[nodiscard]] const char* block_style_label() const;
     [[nodiscard]] const char* palette_style_label() const;

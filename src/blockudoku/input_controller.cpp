@@ -10,7 +10,6 @@ namespace blockudoku
     {
         if(bn::keypad::select_pressed())
         {
-            state.reset();
             return { game_event_type::reset, 0 };
         }
 
@@ -18,7 +17,6 @@ namespace blockudoku
         {
             if(bn::keypad::start_pressed())
             {
-                state.reset();
                 return { game_event_type::reset, 0 };
             }
 

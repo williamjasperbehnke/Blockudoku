@@ -6,7 +6,7 @@ namespace blockudoku
 {
     namespace
     {
-        constexpr char format_tag[8] = { 'B', 'L', 'K', 'D', 'K', '1', 0, 0 };
+        constexpr char format_tag[8] = { 'B', 'L', 'K', 'D', 'K', '2', 0, 0 };
 
         [[nodiscard]] bool has_valid_tag(const char tag[8])
         {
@@ -37,13 +37,14 @@ namespace blockudoku
         return score > _data.entries.back().score;
     }
 
-    void high_scores::insert(const char initials[3], int score)
+    void high_scores::insert(const char initials[3], int score, unsigned seed)
     {
         entry new_entry;
         new_entry.initials[0] = initials[0];
         new_entry.initials[1] = initials[1];
         new_entry.initials[2] = initials[2];
         new_entry.score = score;
+        new_entry.seed = seed;
 
         int insert_index = entries_count;
 
@@ -99,6 +100,7 @@ namespace blockudoku
             score_entry.initials[1] = '-';
             score_entry.initials[2] = '-';
             score_entry.score = 0;
+            score_entry.seed = 0;
         }
     }
 }

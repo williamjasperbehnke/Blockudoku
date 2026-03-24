@@ -1,8 +1,6 @@
 #ifndef BLOCKUDOKU_GAME_STATE_H
 #define BLOCKUDOKU_GAME_STATE_H
 
-#include "bn_random.h"
-
 #include "blockudoku/game_event.h"
 #include "blockudoku/piece_library.h"
 
@@ -16,6 +14,9 @@ public:
     static constexpr int slot_count = 3;
 
     game_state();
+
+    void set_run_seed(unsigned run_seed);
+    [[nodiscard]] unsigned run_seed() const;
 
     void reset();
 
@@ -66,18 +67,12 @@ private:
     int _score = 0;
     int _combo_streak = 0;
     bool _game_over = false;
-    bn::random _random;
+    unsigned _run_seed = 1;
+    unsigned _rng_state = 1;
 
     [[nodiscard]] int random_piece_index();
-
-    [[nodiscard]] bool can_place(const piece_def& piece, int base_x, int base_y) const;
-
-    void place_piece(const piece_def& piece, int base_x, int base_y);
-
-    [[nodiscard]] int clear_completed_lines_and_boxes();
-
+    [[nodiscard]] unsigned next_random_value();
     [[nodiscard]] int slot_moves_available(int slot_index) const;
-
     [[nodiscard]] bool has_any_move() const;
 
     void clamp_cursor_to_selected_piece();

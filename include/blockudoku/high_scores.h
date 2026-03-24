@@ -13,6 +13,7 @@ public:
     {
         char initials[3] = { '-', '-', '-' };
         int score = 0;
+        unsigned seed = 0;
     };
 
     static constexpr int entries_count = 5;
@@ -23,7 +24,7 @@ public:
 
     [[nodiscard]] bool qualifies(int score) const;
 
-    void insert(const char initials[3], int score);
+    void insert(const char initials[3], int score, unsigned seed);
 
 private:
     struct sram_data

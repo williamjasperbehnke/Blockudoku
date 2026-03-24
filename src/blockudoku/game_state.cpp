@@ -4,6 +4,7 @@
 #include "bn_array.h"
 #include "bn_assert.h"
 
+#include "blockudoku/board_rules.h"
 #include "blockudoku/hint_solver.h"
 
 namespace blockudoku
@@ -13,8 +14,29 @@ namespace blockudoku
         reset();
     }
 
+    void game_state::set_run_seed(unsigned run_seed)
+    {
+        if(run_seed == 0)
+        {
+            run_seed = 1;
+        }
+
+        _run_seed = run_seed;
+        _rng_state = run_seed;
+    }
+
+    unsigned game_state::run_seed() const
+    {
+        return _run_seed;
+    }
+
     void game_state::reset()
     {
+        if(_rng_state == 0)
+        {
+            _rng_state = _run_seed == 0 ? 1 : _run_seed;
+        }
+
         for(int y = 0; y < board_size; ++y)
         {
             for(int x = 0; x < board_size; ++x)
@@ -107,13 +129,13 @@ namespace blockudoku
 
         const piece_def& piece = selected_piece();
 
-        if(! can_place(piece, _cursor_x, _cursor_y))
+        if(! board_rules::can_place(_board, piece, _cursor_x, _cursor_y))
         {
             return { game_event_type::invalid, 0 };
         }
 
-        place_piece(piece, _cursor_x, _cursor_y);
-        const int cleared_cells = clear_completed_lines_and_boxes();
+        board_rules::place_piece(_board, piece, _cursor_x, _cursor_y);
+        const int cleared_cells = board_rules::clear_completed_lines_and_boxes(_board);
         _slot_active[_selected_slot] = false;
 
         if(all_slots_used())
@@ -219,7 +241,7 @@ namespace blockudoku
 
     bool game_state::can_place_selected_at_cursor() const
     {
-        return can_place(selected_piece(), _cursor_x, _cursor_y);
+        return board_rules::can_place(_board, selected_piece(), _cursor_x, _cursor_y);
     }
 
     bool game_state::selected_piece_contains(int x, int y) const
@@ -274,7 +296,7 @@ namespace blockudoku
         }
 
         const piece_def& piece = piece_library::at(_slots[slot_index]);
-        if(! can_place(piece, base_x, base_y))
+        if(! board_rules::can_place(_board, piece, base_x, base_y))
         {
             return false;
         }
@@ -318,7 +340,7 @@ namespace blockudoku
             {
                 for(int x = 0; x <= board_size - piece.width; ++x)
                 {
-                    if(can_place(piece, x, y))
+                    if(board_rules::can_place(_board, piece, x, y))
                     {
                         candidates[candidate_count++] = { slot, x, y };
                     }
@@ -369,157 +391,28 @@ namespace blockudoku
 
     int game_state::random_piece_index()
     {
-        return _random.get_int(piece_library::count());
+        return int(next_random_value() % unsigned(piece_library::count()));
     }
 
-    bool game_state::can_place(const piece_def& piece, int base_x, int base_y) const
+    unsigned game_state::next_random_value()
     {
-        if(base_x < 0 || base_y < 0 || base_x + piece.width > board_size || base_y + piece.height > board_size)
-        {
-            return false;
-        }
-
-        for(int y = 0; y < piece.height; ++y)
-        {
-            for(int x = 0; x < piece.width; ++x)
-            {
-                if(piece_library::cell(piece, x, y) && _board[base_y + y][base_x + x])
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    void game_state::place_piece(const piece_def& piece, int base_x, int base_y)
-    {
-        for(int y = 0; y < piece.height; ++y)
-        {
-            for(int x = 0; x < piece.width; ++x)
-            {
-                if(piece_library::cell(piece, x, y))
-                {
-                    _board[base_y + y][base_x + x] = true;
-                }
-            }
-        }
-    }
-
-    int game_state::clear_completed_lines_and_boxes()
-    {
-        bool row_full[board_size] = {};
-        bool column_full[board_size] = {};
-        bool box_full[3][3] = {};
-
-        for(int row = 0; row < board_size; ++row)
-        {
-            bool full = true;
-
-            for(int column = 0; column < board_size; ++column)
-            {
-                if(! _board[row][column])
-                {
-                    full = false;
-                    break;
-                }
-            }
-
-            row_full[row] = full;
-        }
-
-        for(int column = 0; column < board_size; ++column)
-        {
-            bool full = true;
-
-            for(int row = 0; row < board_size; ++row)
-            {
-                if(! _board[row][column])
-                {
-                    full = false;
-                    break;
-                }
-            }
-
-            column_full[column] = full;
-        }
-
-        for(int box_y = 0; box_y < 3; ++box_y)
-        {
-            for(int box_x = 0; box_x < 3; ++box_x)
-            {
-                bool full = true;
-
-                for(int local_y = 0; local_y < 3 && full; ++local_y)
-                {
-                    for(int local_x = 0; local_x < 3; ++local_x)
-                    {
-                        if(! _board[box_y * 3 + local_y][box_x * 3 + local_x])
-                        {
-                            full = false;
-                            break;
-                        }
-                    }
-                }
-
-                box_full[box_y][box_x] = full;
-            }
-        }
-
-        int cleared_count = 0;
-
-        for(int row = 0; row < board_size; ++row)
-        {
-            for(int column = 0; column < board_size; ++column)
-            {
-                if(_board[row][column] &&
-                   (row_full[row] || column_full[column] || box_full[row / 3][column / 3]))
-                {
-                    _board[row][column] = false;
-                    ++cleared_count;
-                }
-            }
-        }
-
-        return cleared_count;
+        // Xorshift32; deterministic from the run seed.
+        unsigned value = _rng_state;
+        value ^= value << 13;
+        value ^= value >> 17;
+        value ^= value << 5;
+        _rng_state = value == 0 ? 0xA341316Cu : value;
+        return _rng_state;
     }
 
     int game_state::slot_moves_available(int slot_index) const
     {
-        const piece_def& piece = piece_library::at(_slots[slot_index]);
-        int result = 0;
-
-        if(! _slot_active[slot_index])
-        {
-            return 0;
-        }
-
-        for(int y = 0; y <= board_size - piece.height; ++y)
-        {
-            for(int x = 0; x <= board_size - piece.width; ++x)
-            {
-                if(can_place(piece, x, y))
-                {
-                    ++result;
-                }
-            }
-        }
-
-        return result;
+        return board_rules::slot_moves_available(_board, _slots, _slot_active, slot_index);
     }
 
     bool game_state::has_any_move() const
     {
-        for(int slot = 0; slot < slot_count; ++slot)
-        {
-            if(slot_moves_available(slot) > 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return board_rules::has_any_move(_board, _slots, _slot_active);
     }
 
     void game_state::clamp_cursor_to_selected_piece()

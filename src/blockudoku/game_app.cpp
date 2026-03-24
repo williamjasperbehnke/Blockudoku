@@ -1,19 +1,13 @@
 #include "blockudoku/game_app.h"
 
+#include "bn_core.h"
 #include "bn_keypad.h"
 
 namespace blockudoku
 {
     namespace
     {
-        constexpr int max_volume_step = 10;
-        constexpr int volume_step_count = max_volume_step + 1;
         constexpr bn::fixed music_volume_scale = bn::fixed(3) / 10;
-
-        [[nodiscard]] int wrap_index(int value, int count)
-        {
-            return (value % count + count) % count;
-        }
 
         [[nodiscard]] int percent_from_step(int volume_step)
         {
@@ -22,7 +16,7 @@ namespace blockudoku
 
         [[nodiscard]] bn::fixed normalized_volume_from_step(int volume_step)
         {
-            return bn::fixed(volume_step) / max_volume_step;
+            return bn::fixed(volume_step) / menu_controller::max_volume_step;
         }
 
         [[nodiscard]] bn::fixed mapped_music_volume(int music_volume_step)
@@ -45,57 +39,16 @@ namespace blockudoku
     {
         if(! _audio_initialized)
         {
-            _audio.set_sfx_volume(normalized_volume_from_step(_sfx_volume_step));
-            _audio.set_music_volume(mapped_music_volume(_music_volume_step));
+            _audio.set_sfx_volume(normalized_volume_from_step(_menu.sfx_volume_step()));
+            _audio.set_music_volume(mapped_music_volume(_menu.music_volume_step()));
             _audio_initialized = true;
         }
     }
 
-    bool game_app::selected_entry_is_option() const
+    void game_app::open_seed_entry()
     {
-        return _menu_index >= int(menu_entry::sfx_volume);
-    }
-
-    void game_app::adjust_selected_option(int delta)
-    {
-        if(delta == 0)
-        {
-            return;
-        }
-
-        switch(static_cast<menu_entry>(_menu_index))
-        {
-            case menu_entry::sfx_volume:
-                _sfx_volume_step = wrap_index(_sfx_volume_step + delta, volume_step_count);
-                _audio.set_sfx_volume(normalized_volume_from_step(_sfx_volume_step));
-                break;
-
-            case menu_entry::music_volume:
-                _music_volume_step = wrap_index(_music_volume_step + delta, volume_step_count);
-                _audio.set_music_volume(mapped_music_volume(_music_volume_step));
-                break;
-
-            case menu_entry::blocks:
-                _block_style = wrap_index(_block_style + delta, ui_renderer::block_style_count);
-                break;
-
-            case menu_entry::palette:
-                _palette_style = wrap_index(_palette_style + delta, ui_renderer::palette_style_count);
-                break;
-
-            case menu_entry::assist:
-                _assist_enabled = ! _assist_enabled;
-                break;
-
-            case menu_entry::start_game:
-            case menu_entry::high_scores:
-            case menu_entry::credits:
-            case menu_entry::count:
-                break;
-
-            default:
-                break;
-        }
+        _run_seed.begin_manual_entry();
+        _scene = scene::enter_seed;
     }
 
     void game_app::update()
@@ -112,6 +65,10 @@ namespace blockudoku
 
             case scene::playing:
                 update_playing();
+                break;
+
+            case scene::enter_seed:
+                update_enter_seed();
                 break;
 
             case scene::enter_initials:
@@ -134,96 +91,75 @@ namespace blockudoku
 
     void game_app::update_menu()
     {
-        constexpr int menu_options = int(menu_entry::count);
-        bool option_adjusted = false;
+        const menu_controller::update_result menu_update =
+                _menu.update(ui_renderer::block_style_count, ui_renderer::palette_style_count);
 
-        if(bn::keypad::up_pressed())
+        if(menu_update.selection_changed)
         {
-            _menu_index = wrap_index(_menu_index - 1, menu_options);
-            _audio.on_event({ game_event_type::slot_changed, 0 });
-        }
-        else if(bn::keypad::down_pressed())
-        {
-            _menu_index = wrap_index(_menu_index + 1, menu_options);
             _audio.on_event({ game_event_type::slot_changed, 0 });
         }
 
-        int option_delta = 0;
-        if(bn::keypad::left_pressed())
+        if(menu_update.sfx_volume_changed)
         {
-            option_delta = -1;
-        }
-        else if(bn::keypad::right_pressed())
-        {
-            option_delta = 1;
-        }
-        else if(bn::keypad::b_pressed() && selected_entry_is_option())
-        {
-            option_delta = -1;
+            _audio.set_sfx_volume(normalized_volume_from_step(_menu.sfx_volume_step()));
         }
 
-        if(option_delta != 0 && selected_entry_is_option())
+        if(menu_update.music_volume_changed)
         {
-            adjust_selected_option(option_delta);
-            option_adjusted = true;
-            _audio.on_event({ game_event_type::placed, 0 });
+            _audio.set_music_volume(mapped_music_volume(_menu.music_volume_step()));
         }
 
-        if(! option_adjusted && confirm_pressed())
+        switch(menu_update.next_action)
         {
-            switch(static_cast<menu_entry>(_menu_index))
-            {
-                case menu_entry::start_game:
-                    start_game();
-                    break;
+            case menu_controller::action::start_game:
+                start_game();
+                break;
 
-                case menu_entry::high_scores:
-                    _scene = scene::high_scores;
-                    break;
+            case menu_controller::action::open_seed_entry:
+                open_seed_entry();
+                break;
 
-                case menu_entry::credits:
-                    _scene = scene::credits;
-                    break;
+            case menu_controller::action::show_high_scores:
+                _scene = scene::high_scores;
+                break;
 
-                case menu_entry::sfx_volume:
-                case menu_entry::music_volume:
-                case menu_entry::blocks:
-                case menu_entry::palette:
-                case menu_entry::assist:
-                    adjust_selected_option(1);
-                    break;
+            case menu_controller::action::show_credits:
+                _scene = scene::credits;
+                break;
 
-                case menu_entry::count:
-                    break;
+            case menu_controller::action::none:
+                break;
 
-                default:
-                    break;
-            }
+            default:
+                break;
+        }
+
+        if(menu_update.option_changed || menu_update.next_action != menu_controller::action::none)
+        {
             _audio.on_event({ game_event_type::placed, 0 });
         }
 
         _renderer.render_main_menu(
             _high_scores,
-            _menu_index,
-            percent_from_step(_sfx_volume_step),
-            percent_from_step(_music_volume_step),
-            _block_style,
-            _palette_style,
-            _assist_enabled);
+            _menu.menu_index(),
+            percent_from_step(_menu.sfx_volume_step()),
+            percent_from_step(_menu.music_volume_step()),
+            _menu.block_style(),
+            _menu.palette_style(),
+            _menu.assist_enabled());
     }
 
     void game_app::update_playing()
     {
-        _renderer.set_block_style(_block_style);
-        _renderer.set_palette_style(_palette_style);
+        _renderer.set_block_style(_menu.block_style());
+        _renderer.set_palette_style(_menu.palette_style());
         game_event event = { game_event_type::none, 0 };
 
-        if(_assist_enabled)
+        if(_menu.assist_enabled())
         {
             if(bn::keypad::select_pressed())
             {
-                _state.reset();
-                _hint_service.reset();
+                start_game();
                 event = { game_event_type::reset, 0 };
             }
             else
@@ -235,7 +171,11 @@ namespace blockudoku
         {
             event = _input.update(_state);
 
-            if(event.type == game_event_type::hint_requested)
+            if(event.type == game_event_type::reset)
+            {
+                start_game();
+            }
+            else if(event.type == game_event_type::hint_requested)
             {
                 _hint_service.request_manual(_state);
             }
@@ -261,13 +201,11 @@ namespace blockudoku
         }
 
         _pending_score = _state.score();
+        _pending_seed = _state.run_seed();
 
         if(_high_scores.qualifies(_pending_score))
         {
-            _initials[0] = 'A';
-            _initials[1] = 'A';
-            _initials[2] = 'A';
-            _initials_index = 0;
+            _initials_entry.begin();
             _scene = scene::enter_initials;
         }
         else
@@ -280,37 +218,63 @@ namespace blockudoku
     {
         if(bn::keypad::left_pressed())
         {
-            _initials_index = (_initials_index + 2) % 3;
+            _initials_entry.move_cursor(-1);
         }
         else if(bn::keypad::right_pressed())
         {
-            _initials_index = (_initials_index + 1) % 3;
+            _initials_entry.move_cursor(1);
         }
         else if(bn::keypad::up_pressed())
         {
-            char& selected = _initials[_initials_index];
-            selected = selected == 'Z' ? 'A' : char(selected + 1);
+            _initials_entry.adjust_selected_letter(1);
         }
         else if(bn::keypad::down_pressed())
         {
-            char& selected = _initials[_initials_index];
-            selected = selected == 'A' ? 'Z' : char(selected - 1);
+            _initials_entry.adjust_selected_letter(-1);
+        }
+
+        if(confirm_pressed() && _initials_entry.confirm())
+        {
+            _high_scores.insert(_initials_entry.initials(), _pending_score, _pending_seed);
+            _scene = scene::high_scores;
+        }
+
+        _renderer.render_initials_entry(
+                _pending_score, _initials_entry.initials(), _initials_entry.cursor_index());
+    }
+
+    void game_app::update_enter_seed()
+    {
+        if(bn::keypad::left_pressed())
+        {
+            _run_seed.move_manual_cursor(-1);
+        }
+        else if(bn::keypad::right_pressed())
+        {
+            _run_seed.move_manual_cursor(1);
+        }
+        else if(bn::keypad::up_pressed())
+        {
+            _run_seed.adjust_manual_digit(1);
+        }
+        else if(bn::keypad::down_pressed())
+        {
+            _run_seed.adjust_manual_digit(-1);
         }
 
         if(confirm_pressed())
         {
-            if(_initials_index < 2)
-            {
-                ++_initials_index;
-            }
-            else
-            {
-                _high_scores.insert(_initials, _pending_score);
-                _scene = scene::high_scores;
-            }
+            start_game_with_seed(_run_seed.manual_seed());
+            return;
         }
 
-        _renderer.render_initials_entry(_pending_score, _initials, _initials_index);
+        if(cancel_pressed())
+        {
+            _scene = scene::menu;
+            return;
+        }
+
+        _renderer.render_seed_entry(_run_seed.manual_digits(), _run_seed.manual_cursor_index());
     }
 
     void game_app::update_high_scores()
@@ -339,6 +303,13 @@ namespace blockudoku
 
     void game_app::start_game()
     {
+        const unsigned entropy = unsigned(bn::core::current_cpu_ticks());
+        start_game_with_seed(_run_seed.next_auto_seed(entropy));
+    }
+
+    void game_app::start_game_with_seed(unsigned seed)
+    {
+        _state.set_run_seed(seed);
         _state.reset();
         _hint_service.reset();
         _scene = scene::playing;
