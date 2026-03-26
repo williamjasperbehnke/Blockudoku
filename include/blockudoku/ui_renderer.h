@@ -41,6 +41,7 @@ public:
     void render_credits();
     void render_seed_entry(const char seed_digits[8], int selected_index);
     void render_initials_entry(int score, const char initials[3], int selected_index);
+    void render_resume_prompt(bool continue_selected, int saved_score, unsigned saved_seed);
 
 private:
     friend class gameplay_screen_renderer;

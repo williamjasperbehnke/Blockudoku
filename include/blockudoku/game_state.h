@@ -13,6 +13,21 @@ public:
     static constexpr int board_size = 9;
     static constexpr int slot_count = 3;
 
+    struct snapshot
+    {
+        bool board[board_size][board_size] = {};
+        int slots[slot_count] = {};
+        bool slot_active[slot_count] = {};
+        int cursor_x = 0;
+        int cursor_y = 0;
+        int selected_slot = 0;
+        int score = 0;
+        int combo_streak = 0;
+        bool game_over = false;
+        unsigned run_seed = 1;
+        unsigned rng_state = 1;
+    };
+
     game_state();
 
     void set_run_seed(unsigned run_seed);
@@ -56,6 +71,8 @@ public:
     [[nodiscard]] bool cycle_hint_move();
 
     [[nodiscard]] int moves_available() const;
+    [[nodiscard]] snapshot make_snapshot() const;
+    [[nodiscard]] bool restore_snapshot(const snapshot& state_snapshot);
 
 private:
     bool _board[board_size][board_size] = {};

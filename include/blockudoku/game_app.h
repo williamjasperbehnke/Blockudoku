@@ -24,6 +24,7 @@ private:
     enum class scene
     {
         menu,
+        resume_prompt,
         playing,
         enter_seed,
         enter_initials,
@@ -45,11 +46,16 @@ private:
     dpad_repeater _entry_dpad;
     int _pending_score = 0;
     unsigned _pending_seed = 0;
+    int _resume_prompt_index = 0;
+    scene _resume_prompt_return_scene = scene::menu;
 
     void initialize_audio_once();
     void open_seed_entry();
+    void go_to_menu();
+    void open_resume_prompt(scene return_scene);
 
     void update_menu();
+    void update_resume_prompt();
     void update_playing();
     void update_enter_seed();
     void update_enter_initials();

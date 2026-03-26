@@ -52,6 +52,20 @@ namespace blockudoku
         _scene = scene::enter_seed;
     }
 
+    void game_app::go_to_menu()
+    {
+        _entry_dpad.reset();
+        _scene = scene::menu;
+    }
+
+    void game_app::open_resume_prompt(scene return_scene)
+    {
+        _entry_dpad.reset();
+        _resume_prompt_index = 0;
+        _resume_prompt_return_scene = return_scene;
+        _scene = scene::resume_prompt;
+    }
+
     void game_app::update()
     {
         initialize_audio_once();
@@ -62,6 +76,10 @@ namespace blockudoku
         {
             case scene::menu:
                 update_menu();
+                break;
+
+            case scene::resume_prompt:
+                update_resume_prompt();
                 break;
 
             case scene::playing:
@@ -112,7 +130,14 @@ namespace blockudoku
         switch(menu_update.next_action)
         {
             case menu_controller::action::start_game:
-                start_game();
+                if(_high_scores.has_saved_game())
+                {
+                    open_resume_prompt(scene::menu);
+                }
+                else
+                {
+                    start_game();
+                }
                 break;
 
             case menu_controller::action::open_seed_entry:
@@ -153,9 +178,10 @@ namespace blockudoku
     {
         if(bn::keypad::select_pressed())
         {
+            _high_scores.save_game_state(_state);
             _hint_service.reset();
             _audio.on_event({ game_event_type::reset, 0 });
-            _scene = scene::menu;
+            go_to_menu();
             return;
         }
 
@@ -197,9 +223,14 @@ namespace blockudoku
 
         if(event.type != game_event_type::game_over)
         {
+            if(event.type == game_event_type::placed || event.type == game_event_type::cleared)
+            {
+                _high_scores.save_game_state(_state);
+            }
             return;
         }
 
+        _high_scores.clear_saved_game();
         _pending_score = _state.score();
         _pending_seed = _state.run_seed();
 
@@ -271,7 +302,7 @@ namespace blockudoku
 
         if(cancel_pressed())
         {
-            _scene = scene::menu;
+            go_to_menu();
             return;
         }
 
@@ -282,11 +313,18 @@ namespace blockudoku
     {
         if(confirm_pressed())
         {
-            start_game();
+            if(_high_scores.has_saved_game())
+            {
+                open_resume_prompt(scene::high_scores);
+            }
+            else
+            {
+                start_game();
+            }
         }
         else if(cancel_pressed())
         {
-            _scene = scene::menu;
+            go_to_menu();
         }
 
         _renderer.render_high_scores(_high_scores);
@@ -296,10 +334,46 @@ namespace blockudoku
     {
         if(cancel_pressed() || confirm_pressed())
         {
-            _scene = scene::menu;
+            go_to_menu();
         }
 
         _renderer.render_credits();
+    }
+
+    void game_app::update_resume_prompt()
+    {
+        if(_entry_dpad.up() || _entry_dpad.down() || _entry_dpad.left() || _entry_dpad.right())
+        {
+            _resume_prompt_index = 1 - _resume_prompt_index;
+            _audio.on_event({ game_event_type::slot_changed, 0 });
+        }
+
+        if(confirm_pressed())
+        {
+            _audio.on_event({ game_event_type::placed, 0 });
+
+            if(_resume_prompt_index == 0)
+            {
+                if(_high_scores.load_saved_game(_state))
+                {
+                    _hint_service.reset();
+                    _scene = scene::playing;
+                    return;
+                }
+            }
+
+            start_game();
+            return;
+        }
+
+        if(cancel_pressed())
+        {
+            _scene = _resume_prompt_return_scene;
+            return;
+        }
+
+        _renderer.render_resume_prompt(
+                _resume_prompt_index == 0, _high_scores.saved_game_score(), _high_scores.saved_game_seed());
     }
 
     void game_app::start_game()
@@ -312,6 +386,7 @@ namespace blockudoku
     {
         _state.set_run_seed(seed);
         _state.reset();
+        _high_scores.save_game_state(_state);
         _hint_service.reset();
         _scene = scene::playing;
     }

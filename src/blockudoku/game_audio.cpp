@@ -75,7 +75,7 @@ namespace blockudoku
                 break;
 
             case game_event_type::cleared:
-                bn::sound_items::clear_chunk.play(0.95 * _sfx_volume);
+                bn::sound_items::clear_chunk.play(1.0 * _sfx_volume);
                 break;
 
             case game_event_type::game_over:

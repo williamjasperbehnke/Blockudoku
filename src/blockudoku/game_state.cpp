@@ -389,6 +389,114 @@ namespace blockudoku
         return result;
     }
 
+    game_state::snapshot game_state::make_snapshot() const
+    {
+        snapshot state_snapshot;
+
+        for(int y = 0; y < board_size; ++y)
+        {
+            for(int x = 0; x < board_size; ++x)
+            {
+                state_snapshot.board[y][x] = _board[y][x];
+            }
+        }
+
+        for(int slot = 0; slot < slot_count; ++slot)
+        {
+            state_snapshot.slots[slot] = _slots[slot];
+            state_snapshot.slot_active[slot] = _slot_active[slot];
+        }
+
+        state_snapshot.cursor_x = _cursor_x;
+        state_snapshot.cursor_y = _cursor_y;
+        state_snapshot.selected_slot = _selected_slot;
+        state_snapshot.score = _score;
+        state_snapshot.combo_streak = _combo_streak;
+        state_snapshot.game_over = _game_over;
+        state_snapshot.run_seed = _run_seed;
+        state_snapshot.rng_state = _rng_state;
+        return state_snapshot;
+    }
+
+    bool game_state::restore_snapshot(const snapshot& state_snapshot)
+    {
+        if(state_snapshot.selected_slot < 0 || state_snapshot.selected_slot >= slot_count)
+        {
+            return false;
+        }
+
+        if(state_snapshot.cursor_x < 0 || state_snapshot.cursor_x >= board_size ||
+           state_snapshot.cursor_y < 0 || state_snapshot.cursor_y >= board_size)
+        {
+            return false;
+        }
+
+        if(state_snapshot.score < 0 || state_snapshot.combo_streak < 0)
+        {
+            return false;
+        }
+
+        for(int slot = 0; slot < slot_count; ++slot)
+        {
+            if(state_snapshot.slots[slot] < 0 || state_snapshot.slots[slot] >= piece_library::count())
+            {
+                return false;
+            }
+        }
+
+        for(int y = 0; y < board_size; ++y)
+        {
+            for(int x = 0; x < board_size; ++x)
+            {
+                _board[y][x] = state_snapshot.board[y][x];
+            }
+        }
+
+        for(int slot = 0; slot < slot_count; ++slot)
+        {
+            _slots[slot] = state_snapshot.slots[slot];
+            _slot_active[slot] = state_snapshot.slot_active[slot];
+        }
+
+        _cursor_x = state_snapshot.cursor_x;
+        _cursor_y = state_snapshot.cursor_y;
+        _selected_slot = state_snapshot.selected_slot;
+        _score = state_snapshot.score;
+        _combo_streak = state_snapshot.combo_streak;
+        _game_over = state_snapshot.game_over;
+        _run_seed = state_snapshot.run_seed == 0 ? 1 : state_snapshot.run_seed;
+        _rng_state = state_snapshot.rng_state == 0 ? _run_seed : state_snapshot.rng_state;
+
+        bool any_active_slot = false;
+        for(bool slot_active : _slot_active)
+        {
+            if(slot_active)
+            {
+                any_active_slot = true;
+                break;
+            }
+        }
+
+        if(! any_active_slot)
+        {
+            refill_slots();
+            _selected_slot = 0;
+        }
+        else if(! _slot_active[_selected_slot])
+        {
+            select_first_active_slot();
+        }
+
+        clamp_cursor_to_selected_piece();
+
+        if(! has_any_move())
+        {
+            _game_over = true;
+        }
+
+        return true;
+    }
+
     int game_state::random_piece_index()
     {
         return int(next_random_value() % unsigned(piece_library::count()));

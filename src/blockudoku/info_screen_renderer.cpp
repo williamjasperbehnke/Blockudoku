@@ -113,4 +113,30 @@ namespace blockudoku
         renderer._accent_text_generator.generate(-88, 64, "UP/DOWN DIGIT  L/R POS", renderer._text_sprites);
         renderer.commit_frame();
     }
+
+    void info_screen_renderer::render_resume_prompt(
+            ui_renderer& renderer, bool continue_selected, int saved_score, unsigned saved_seed)
+    {
+        renderer.set_scene_background(ui_renderer::scene_bg_type::info);
+        renderer.clear_ui_map();
+        renderer._text_sprites.clear();
+
+        renderer._accent_text_generator.generate(-88, -58, "RESUME RUN?", renderer._text_sprites);
+
+        bn::string<24> score_text("SCORE ");
+        score_text += bn::to_string<12>(saved_score);
+        renderer._text_generator.generate(-88, -40, score_text, renderer._text_sprites);
+
+        bn::string<24> seed_text("SEED ");
+        seed_text += bn::to_string<12>(saved_seed);
+        renderer._text_generator.generate(-88, -28, seed_text, renderer._text_sprites);
+
+        (continue_selected ? renderer._accent_text_generator : renderer._text_generator)
+                .generate(-88, -4, continue_selected ? "> CONTINUE GAME" : "  CONTINUE GAME", renderer._text_sprites);
+        (! continue_selected ? renderer._accent_text_generator : renderer._text_generator)
+                .generate(-88, 8, ! continue_selected ? "> START NEW GAME" : "  START NEW GAME", renderer._text_sprites);
+
+        renderer._accent_text_generator.generate(-88, 64, "UP/DOWN CHOOSE  A BEGIN", renderer._text_sprites);
+        renderer.commit_frame();
+    }
 }

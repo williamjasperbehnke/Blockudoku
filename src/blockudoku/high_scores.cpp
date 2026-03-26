@@ -6,13 +6,20 @@ namespace blockudoku
 {
     namespace
     {
-        constexpr char format_tag[8] = { 'B', 'L', 'K', 'D', 'K', '2', 0, 0 };
+        constexpr char format_tag_v2[8] = { 'B', 'L', 'K', 'D', 'K', '2', 0, 0 };
+        constexpr char format_tag_v3[8] = { 'B', 'L', 'K', 'D', 'K', '3', 0, 0 };
 
-        [[nodiscard]] bool has_valid_tag(const char tag[8])
+        struct old_sram_data_v2
         {
-            for(int index = 0; index < int(sizeof(format_tag)); ++index)
+            char tag[8] = {};
+            bn::array<high_scores::entry, high_scores::entries_count> entries;
+        };
+
+        [[nodiscard]] bool has_tag(const char tag[8], const char expected_tag[8])
+        {
+            for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
             {
-                if(tag[index] != format_tag[index])
+                if(tag[index] != expected_tag[index])
                 {
                     return false;
                 }
@@ -71,15 +78,77 @@ namespace blockudoku
         save();
     }
 
+    bool high_scores::has_saved_game() const
+    {
+        return _data.saved_game_present;
+    }
+
+    int high_scores::saved_game_score() const
+    {
+        return _data.saved_game_present ? _data.saved_game.score : 0;
+    }
+
+    unsigned high_scores::saved_game_seed() const
+    {
+        return _data.saved_game_present ? _data.saved_game.run_seed : 0;
+    }
+
+    void high_scores::save_game_state(const game_state& state)
+    {
+        _data.saved_game = state.make_snapshot();
+        _data.saved_game_present = true;
+        save();
+    }
+
+    bool high_scores::load_saved_game(game_state& state)
+    {
+        if(! _data.saved_game_present)
+        {
+            return false;
+        }
+
+        if(state.restore_snapshot(_data.saved_game))
+        {
+            return true;
+        }
+
+        clear_saved_game();
+        return false;
+    }
+
+    void high_scores::clear_saved_game()
+    {
+        _data.saved_game_present = false;
+        _data.saved_game = {};
+        save();
+    }
+
     void high_scores::load()
     {
         bn::sram::read(_data);
 
-        if(! has_valid_tag(_data.tag))
+        if(has_tag(_data.tag, format_tag_v3))
         {
-            set_default_entries();
-            save();
+            return;
         }
+
+        if(has_tag(_data.tag, format_tag_v2))
+        {
+            old_sram_data_v2 previous_data;
+            bn::sram::read(previous_data);
+            _data.entries = previous_data.entries;
+            for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
+            {
+                _data.tag[index] = format_tag_v3[index];
+            }
+            _data.saved_game_present = false;
+            _data.saved_game = {};
+            save();
+            return;
+        }
+
+        set_default_entries();
+        save();
     }
 
     void high_scores::save() const
@@ -89,9 +158,9 @@ namespace blockudoku
 
     void high_scores::set_default_entries()
     {
-        for(int index = 0; index < int(sizeof(format_tag)); ++index)
+        for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
         {
-            _data.tag[index] = format_tag[index];
+            _data.tag[index] = format_tag_v3[index];
         }
 
         for(entry& score_entry : _data.entries)
@@ -102,5 +171,8 @@ namespace blockudoku
             score_entry.score = 0;
             score_entry.seed = 0;
         }
+
+        _data.saved_game_present = false;
+        _data.saved_game = {};
     }
 }

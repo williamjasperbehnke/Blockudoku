@@ -108,6 +108,11 @@ namespace blockudoku
         info_screen_renderer::render_initials_entry(*this, score, initials, selected_index);
     }
 
+    void ui_renderer::render_resume_prompt(bool continue_selected, int saved_score, unsigned saved_seed)
+    {
+        info_screen_renderer::render_resume_prompt(*this, continue_selected, saved_score, saved_seed);
+    }
+
     void ui_renderer::build_static_bg()
     {
         _title_bg = bn::regular_bg_items::title_bg.create_bg(0, 0);
