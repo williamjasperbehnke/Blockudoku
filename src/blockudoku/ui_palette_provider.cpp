@@ -20,98 +20,98 @@ namespace blockudoku::ui_palette_provider
     namespace
     {
         constexpr bn::array<bn::color, 16> text_palette_classic = {
-            bn::color(0, 31, 0), bn::color(31, 31, 31), bn::color(0, 0, 0), bn::color(0, 0, 0),
+            bn::color(0, 31, 0), bn::color(29, 29, 29), bn::color(2, 2, 2), bn::color(2, 2, 2),
             bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0),
             bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0),
             bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0), bn::color(0, 0, 0)
         };
         constexpr bn::array<bn::color, 16> text_palette_sunrise = {
-            bn::color(0, 31, 0), bn::color(31, 29, 26), bn::color(14, 6, 2), bn::color(14, 6, 2),
+            bn::color(0, 31, 0), bn::color(30, 28, 25), bn::color(15, 8, 4), bn::color(15, 8, 4),
             bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2),
             bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2),
             bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2), bn::color(14, 6, 2)
         };
         constexpr bn::array<bn::color, 16> text_palette_mint = {
-            bn::color(0, 31, 0), bn::color(30, 31, 30), bn::color(3, 10, 7), bn::color(3, 10, 7),
+            bn::color(0, 31, 0), bn::color(29, 30, 29), bn::color(5, 10, 8), bn::color(5, 10, 8),
             bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7),
             bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7),
             bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7), bn::color(3, 10, 7)
         };
         constexpr bn::array<bn::color, 16> text_palette_ocean = {
-            bn::color(0, 31, 0), bn::color(30, 31, 31), bn::color(2, 5, 12), bn::color(2, 5, 12),
+            bn::color(0, 31, 0), bn::color(29, 30, 30), bn::color(4, 7, 11), bn::color(4, 7, 11),
             bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12),
             bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12),
             bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12), bn::color(2, 5, 12)
         };
         constexpr bn::array<bn::color, 16> text_palette_forest = {
-            bn::color(0, 31, 0), bn::color(29, 31, 28), bn::color(4, 8, 3), bn::color(4, 8, 3),
+            bn::color(0, 31, 0), bn::color(28, 30, 27), bn::color(5, 9, 5), bn::color(5, 9, 5),
             bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3),
             bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3),
             bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3), bn::color(4, 8, 3)
         };
         constexpr bn::array<bn::color, 16> text_palette_grayscale = {
-            bn::color(0, 31, 0), bn::color(31, 31, 31), bn::color(6, 6, 6), bn::color(6, 6, 6),
+            bn::color(0, 31, 0), bn::color(29, 29, 29), bn::color(7, 7, 7), bn::color(7, 7, 7),
             bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6),
             bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6),
             bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6), bn::color(6, 6, 6)
         };
         constexpr bn::array<bn::color, 16> text_palette_colorblind = {
-            bn::color(0, 31, 0), bn::color(31, 31, 30), bn::color(5, 5, 12), bn::color(5, 5, 12),
+            bn::color(0, 31, 0), bn::color(30, 30, 29), bn::color(6, 6, 12), bn::color(6, 6, 12),
             bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12),
             bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12),
             bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12), bn::color(5, 5, 12)
         };
         constexpr bn::array<bn::color, 16> text_palette_gameboy = {
-            bn::color(0, 31, 0), bn::color(22, 27, 18), bn::color(3, 7, 2), bn::color(3, 7, 2),
+            bn::color(0, 31, 0), bn::color(21, 26, 18), bn::color(4, 8, 4), bn::color(4, 8, 4),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2)
         };
 
         constexpr bn::array<bn::color, 16> accent_palette_classic = {
-            bn::color(0, 31, 0), bn::color(16, 24, 31), bn::color(2, 5, 17), bn::color(2, 5, 17),
+            bn::color(0, 31, 0), bn::color(17, 24, 29), bn::color(4, 7, 17), bn::color(4, 7, 17),
             bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17),
             bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17),
             bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17), bn::color(2, 5, 17)
         };
         constexpr bn::array<bn::color, 16> accent_palette_sunrise = {
-            bn::color(0, 31, 0), bn::color(31, 23, 14), bn::color(12, 4, 2), bn::color(12, 4, 2),
+            bn::color(0, 31, 0), bn::color(30, 23, 16), bn::color(13, 6, 4), bn::color(13, 6, 4),
             bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2),
             bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2),
             bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2), bn::color(12, 4, 2)
         };
         constexpr bn::array<bn::color, 16> accent_palette_mint = {
-            bn::color(0, 31, 0), bn::color(18, 31, 24), bn::color(2, 10, 6), bn::color(2, 10, 6),
+            bn::color(0, 31, 0), bn::color(19, 30, 24), bn::color(4, 11, 8), bn::color(4, 11, 8),
             bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6),
             bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6),
             bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6), bn::color(2, 10, 6)
         };
         constexpr bn::array<bn::color, 16> accent_palette_ocean = {
-            bn::color(0, 31, 0), bn::color(14, 24, 31), bn::color(2, 4, 12), bn::color(2, 4, 12),
+            bn::color(0, 31, 0), bn::color(15, 24, 29), bn::color(4, 6, 12), bn::color(4, 6, 12),
             bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12),
             bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12),
             bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12), bn::color(2, 4, 12)
         };
         constexpr bn::array<bn::color, 16> accent_palette_forest = {
-            bn::color(0, 31, 0), bn::color(18, 28, 14), bn::color(3, 7, 2), bn::color(3, 7, 2),
+            bn::color(0, 31, 0), bn::color(19, 27, 15), bn::color(5, 8, 4), bn::color(5, 8, 4),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2),
             bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2), bn::color(3, 7, 2)
         };
         constexpr bn::array<bn::color, 16> accent_palette_grayscale = {
-            bn::color(0, 31, 0), bn::color(24, 24, 24), bn::color(3, 3, 3), bn::color(3, 3, 3),
+            bn::color(0, 31, 0), bn::color(22, 22, 22), bn::color(4, 4, 4), bn::color(4, 4, 4),
             bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3),
             bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3),
             bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3), bn::color(3, 3, 3)
         };
         constexpr bn::array<bn::color, 16> accent_palette_colorblind = {
-            bn::color(0, 31, 0), bn::color(31, 23, 12), bn::color(4, 4, 12), bn::color(4, 4, 12),
+            bn::color(0, 31, 0), bn::color(30, 23, 14), bn::color(6, 6, 12), bn::color(6, 6, 12),
             bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12),
             bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12),
             bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12), bn::color(4, 4, 12)
         };
         constexpr bn::array<bn::color, 16> accent_palette_gameboy = {
-            bn::color(0, 31, 0), bn::color(16, 24, 12), bn::color(2, 5, 1), bn::color(2, 5, 1),
+            bn::color(0, 31, 0), bn::color(17, 23, 13), bn::color(4, 6, 3), bn::color(4, 6, 3),
             bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1),
             bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1),
             bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1), bn::color(2, 5, 1)
