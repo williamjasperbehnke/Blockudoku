@@ -8,6 +8,7 @@ A Blockudoku-inspired puzzle game built for Game Boy Advance using [Butano](http
 - 3-piece tray flow (use all 3 pieces before new deal).
 - Multiple block styles and palette themes.
 - Seeded runs (auto seed or manual seed entry).
+- Run state autosave to SRAM with continue/new-run prompt on start.
 - High scores saved to SRAM, including run seed.
 - Hint system with separate step budgets:
   - Manual hint (`START`): higher search budget
@@ -44,6 +45,7 @@ A Blockudoku-inspired puzzle game built for Game Boy Advance using [Butano](http
 
 ![Enter Initials](screenshots/enter_initials.png)
 ![Seed](screenshots/seed.png)
+![Continue Prompt](screenshots/continue.png)
 
 ### High Scores / Credits
 
@@ -97,6 +99,7 @@ Open `blockudoku.gba` in your preferred GBA emulator (for example, mGBA).
 - `A` / `START`: Confirm / increase selected option
 - `B`: Decrease selected option (where applicable) or back
 - `SELECT` (on Start Game): Open seed entry
+- When a saved run exists, starting a run opens a `Continue` / `Start New` prompt
 
 ## Project Structure
 
