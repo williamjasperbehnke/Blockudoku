@@ -22,6 +22,7 @@ struct game_event
 {
     game_event_type type = game_event_type::none;
     int cleared_cells = 0;
+    bool full_board_clear = false;
 };
 
 }

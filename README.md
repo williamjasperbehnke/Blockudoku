@@ -92,6 +92,8 @@ Open `blockudoku.gba` in your preferred GBA emulator (for example, mGBA).
 - `START`: Request best-move hint
 - `B`: Cycle through valid hint placements
 - `SELECT`: Return to main menu
+- `L + R + SELECT`: Toggle dev mode
+- `B` (dev mode): Refresh tray pieces
 
 ### Menus / Entry Screens
 

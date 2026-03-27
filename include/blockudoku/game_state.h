@@ -12,6 +12,7 @@ class game_state
 public:
     static constexpr int board_size = 9;
     static constexpr int slot_count = 3;
+    static constexpr int full_board_clear_bonus = 150;
 
     struct snapshot
     {
@@ -69,6 +70,7 @@ public:
     [[nodiscard]] bool apply_hint();
     [[nodiscard]] bool apply_hint_move(int slot_index, int base_x, int base_y);
     [[nodiscard]] bool cycle_hint_move();
+    void dev_refresh_tray();
 
     [[nodiscard]] int moves_available() const;
     [[nodiscard]] snapshot make_snapshot() const;
@@ -91,6 +93,7 @@ private:
     [[nodiscard]] unsigned next_random_value();
     [[nodiscard]] int slot_moves_available(int slot_index) const;
     [[nodiscard]] bool has_any_move() const;
+    [[nodiscard]] bool is_board_empty() const;
 
     void clamp_cursor_to_selected_piece();
 

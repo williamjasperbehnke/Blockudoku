@@ -69,14 +69,14 @@ namespace blockudoku
         }
     }
 
-    void ui_renderer::trigger_clear_feedback(int cleared_cells)
+    void ui_renderer::trigger_clear_feedback(int cleared_cells, bool full_board_clear)
     {
-        _feedback.on_clear(cleared_cells);
+        _feedback.on_clear(cleared_cells, full_board_clear);
     }
 
-    void ui_renderer::render(const game_state& state)
+    void ui_renderer::render(const game_state& state, bool dev_mode)
     {
-        gameplay_screen_renderer::render(*this, state);
+        gameplay_screen_renderer::render(*this, state, dev_mode);
     }
 
     void ui_renderer::render_main_menu(

@@ -9,7 +9,7 @@
 
 namespace blockudoku
 {
-    void gameplay_screen_renderer::draw_header(ui_renderer& renderer, const game_state& state)
+    void gameplay_screen_renderer::draw_header(ui_renderer& renderer, const game_state& state, bool dev_mode)
     {
         bn::string<20> score_text("PTS ");
         score_text += bn::to_string<12>(state.score());
@@ -18,11 +18,18 @@ namespace blockudoku
         bn::string<20> moves_text("MOVES ");
         moves_text += bn::to_string<12>(state.moves_available());
         renderer._text_generator.generate(38, -56, moves_text, renderer._text_sprites);
+
+        if(dev_mode)
+        {
+            renderer._accent_text_generator.generate(38, -44, "DEV", renderer._text_sprites);
+        }
     }
 
     void gameplay_screen_renderer::draw_board(ui_renderer& renderer, const game_state& state)
     {
         bool green_highlight[game_state::board_size][game_state::board_size] = {};
+        const bool full_clear_animation = renderer._feedback.full_clear_animation_active();
+        const int full_clear_age = renderer._feedback.full_clear_animation_age();
 
         const auto tile16_base = [&](int tile_index) -> int
         {
@@ -169,11 +176,32 @@ namespace blockudoku
                     board_tile =
                             green_highlight[y][x] ? ui_render_constants::tile_green : ui_render_constants::tile_tan;
                 }
+
+                if(full_clear_animation)
+                {
+                    const int center = game_state::board_size / 2;
+                    const int dx = x >= center ? x - center : center - x;
+                    const int dy = y >= center ? y - center : center - y;
+                    const int distance = dx + dy;
+                    const int ring = 1 + (full_clear_age / 2);
+                    const bool ring_hit = distance == ring || distance == ring - 1;
+
+                    if(ring_hit)
+                    {
+                        board_tile = (full_clear_age / 2) % 2 == 0 ? ui_render_constants::tile_blue :
+                                                                    ui_render_constants::tile_green;
+                    }
+                    else if(distance < ring - 1 && full_clear_age % 4 < 2)
+                    {
+                        board_tile = ui_render_constants::tile_tan;
+                    }
+                }
+
                 draw_scaled_board_cell(x, y, board_tile);
             }
         }
 
-        if(state.slot_active(state.selected_slot()))
+        if(! full_clear_animation && state.slot_active(state.selected_slot()))
         {
             const piece_def& piece = state.selected_piece();
             const bool valid = state.can_place_selected_at_cursor();
@@ -258,14 +286,15 @@ namespace blockudoku
         }
     }
 
-    void gameplay_screen_renderer::render(ui_renderer& renderer, const game_state& state)
+    void gameplay_screen_renderer::render(ui_renderer& renderer, const game_state& state, bool dev_mode)
     {
         renderer.set_scene_background(ui_renderer::scene_bg_type::gameplay);
         renderer.clear_ui_map();
         renderer._text_sprites.clear();
 
-        draw_header(renderer, state);
+        draw_header(renderer, state, dev_mode);
         draw_board(renderer, state);
+        renderer._feedback.advance_full_clear_animation();
         draw_tray(renderer, state);
         renderer._feedback.update_careful_condition(state);
         renderer._feedback.draw_messages(

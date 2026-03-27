@@ -31,9 +31,9 @@ public:
 
     void set_block_style(block_style style);
     void set_palette_style(palette_style style);
-    void trigger_clear_feedback(int cleared_cells);
+    void trigger_clear_feedback(int cleared_cells, bool full_board_clear);
 
-    void render(const game_state& state);
+    void render(const game_state& state, bool dev_mode);
     void render_main_menu(
             const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent,
             block_style style, palette_style palette, bool assist_enabled);

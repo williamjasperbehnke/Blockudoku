@@ -11,6 +11,8 @@ namespace blockudoku
     namespace
     {
         constexpr int clear_popup_duration_frames = 28;
+        constexpr int full_clear_popup_duration_frames = 32;
+        constexpr int full_clear_animation_duration_frames = 20;
         constexpr int careful_popup_duration_frames = 44;
         constexpr int careful_low_moves_threshold = 12;
         constexpr int careful_fade_start_frames = 16;
@@ -18,15 +20,17 @@ namespace blockudoku
         constexpr int big_clear_cells_threshold = 12;
     }
 
-    void gameplay_feedback::on_clear(int cleared_cells)
+    void gameplay_feedback::on_clear(int cleared_cells, bool full_board_clear)
     {
         if(cleared_cells > 0)
         {
-            const int frames = 4 + (cleared_cells / 2);
-            _shake_frames = frames < 12 ? frames : 12;
+            const int frames = full_board_clear ? 0 : (4 + (cleared_cells / 2));
+            _shake_frames = frames < 20 ? frames : 20;
             _shake_index = 0;
-            _clear_popup_frames = clear_popup_duration_frames;
+            _clear_popup_frames = full_board_clear ? full_clear_popup_duration_frames : clear_popup_duration_frames;
             _last_cleared_cells = cleared_cells;
+            _last_full_board_clear = full_board_clear;
+            _full_clear_animation_frames = full_board_clear ? full_clear_animation_duration_frames : 0;
         }
     }
 
@@ -42,6 +46,8 @@ namespace blockudoku
         _shake_index = 0;
         _clear_popup_frames = 0;
         _last_cleared_cells = 0;
+        _full_clear_animation_frames = 0;
+        _last_full_board_clear = false;
         _careful_popup_frames = 0;
         _careful_condition_previous = false;
 
@@ -86,14 +92,23 @@ namespace blockudoku
 
         if(_clear_popup_frames > 0)
         {
-            const int age = clear_popup_duration_frames - _clear_popup_frames;
+            const int popup_duration =
+                    _last_full_board_clear ? full_clear_popup_duration_frames : clear_popup_duration_frames;
+            const int age = popup_duration - _clear_popup_frames;
             const int rise = age > 0 ? age / 4 : 0;
             const int wobble = (age % 6 < 3) ? -1 : 1;
             const int text_x = -40 + wobble;
             const int text_y = -2 - rise;
             clear_message_visible = true;
 
-            if(state.combo_streak() > 1)
+            if(_last_full_board_clear)
+            {
+                bn::string<24> full_clear_text("FULL CLEAR +");
+                full_clear_text += bn::to_string<6>(game_state::full_board_clear_bonus);
+                accent_generator.generate(text_x + 1, text_y + 1, full_clear_text, output_sprites);
+                text_generator.generate(text_x, text_y, full_clear_text, output_sprites);
+            }
+            else if(state.combo_streak() > 1)
             {
                 bn::string<20> combo_text("COMBO x");
                 combo_text += bn::to_string<4>(state.combo_streak());
@@ -145,12 +160,21 @@ namespace blockudoku
         };
         constexpr int shake_pattern_size = int(sizeof(shake_pattern) / sizeof(shake_pattern[0]));
 
+        int shake_x = 0;
+        int shake_y = 0;
+
         if(_shake_frames > 0)
         {
             const int pattern_index = _shake_index < shake_pattern_size ? _shake_index : (shake_pattern_size - 1);
-            const int shake_x = shake_pattern[pattern_index][0];
-            const int shake_y = shake_pattern[pattern_index][1];
+            shake_x = shake_pattern[pattern_index][0];
+            shake_y = shake_pattern[pattern_index][1];
 
+            ++_shake_index;
+            --_shake_frames;
+        }
+
+        if(shake_x != 0 || shake_y != 0)
+        {
             if(gameplay_bg)
             {
                 gameplay_bg->set_position(shake_x, shake_y);
@@ -166,9 +190,6 @@ namespace blockudoku
                 sprite.set_x(sprite.x() + shake_x);
                 sprite.set_y(sprite.y() + shake_y);
             }
-
-            ++_shake_index;
-            --_shake_frames;
         }
         else
         {
@@ -181,6 +202,29 @@ namespace blockudoku
             {
                 ui_bg->set_position(0, 0);
             }
+        }
+    }
+
+    bool gameplay_feedback::full_clear_animation_active() const
+    {
+        return _full_clear_animation_frames > 0;
+    }
+
+    int gameplay_feedback::full_clear_animation_age() const
+    {
+        if(_full_clear_animation_frames <= 0)
+        {
+            return 0;
+        }
+
+        return full_clear_animation_duration_frames - _full_clear_animation_frames;
+    }
+
+    void gameplay_feedback::advance_full_clear_animation()
+    {
+        if(_full_clear_animation_frames > 0)
+        {
+            --_full_clear_animation_frames;
         }
     }
 }

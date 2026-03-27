@@ -10,10 +10,10 @@ class ui_renderer;
 class gameplay_screen_renderer
 {
 public:
-    static void render(ui_renderer& renderer, const game_state& state);
+    static void render(ui_renderer& renderer, const game_state& state, bool dev_mode);
 
 private:
-    static void draw_header(ui_renderer& renderer, const game_state& state);
+    static void draw_header(ui_renderer& renderer, const game_state& state, bool dev_mode);
     static void draw_board(ui_renderer& renderer, const game_state& state);
     static void draw_tray(ui_renderer& renderer, const game_state& state);
 };

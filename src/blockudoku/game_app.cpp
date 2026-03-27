@@ -176,6 +176,27 @@ namespace blockudoku
 
     void game_app::update_playing()
     {
+        const bool l_down = bn::keypad::l_held() || bn::keypad::l_pressed();
+        const bool r_down = bn::keypad::r_held() || bn::keypad::r_pressed();
+
+        if(l_down && r_down && bn::keypad::select_pressed())
+        {
+            _dev_mode = ! _dev_mode;
+            _audio.on_event({ game_event_type::slot_changed, 0 });
+            _renderer.render(_state, _dev_mode);
+            return;
+        }
+
+        if(_dev_mode && bn::keypad::b_pressed())
+        {
+            _state.dev_refresh_tray();
+            _hint_service.reset();
+            _high_scores.save_game_state(_state);
+            _audio.on_event({ game_event_type::placed, 0 });
+            _renderer.render(_state, _dev_mode);
+            return;
+        }
+
         if(bn::keypad::select_pressed())
         {
             _high_scores.save_game_state(_state);
@@ -215,10 +236,10 @@ namespace blockudoku
 
         if(event.cleared_cells > 0)
         {
-            _renderer.trigger_clear_feedback(event.cleared_cells);
+            _renderer.trigger_clear_feedback(event.cleared_cells, event.full_board_clear);
         }
 
-        _renderer.render(_state);
+        _renderer.render(_state, _dev_mode);
         _audio.on_event(event);
 
         if(event.type != game_event_type::game_over)

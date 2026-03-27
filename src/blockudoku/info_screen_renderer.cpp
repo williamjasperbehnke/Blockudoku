@@ -28,8 +28,6 @@ namespace blockudoku
             line += entry.initials[2];
             line += " ";
             line += bn::to_string<10>(entry.score);
-            line += " S";
-            line += bn::to_string<12>(entry.seed);
             renderer._text_generator.generate(-88, -40 + (index * 12), line, renderer._text_sprites);
         }
 

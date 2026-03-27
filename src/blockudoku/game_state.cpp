@@ -136,6 +136,7 @@ namespace blockudoku
 
         board_rules::place_piece(_board, piece, _cursor_x, _cursor_y);
         const int cleared_cells = board_rules::clear_completed_lines_and_boxes(_board);
+        const bool full_board_clear = cleared_cells > 0 && is_board_empty();
         _slot_active[_selected_slot] = false;
 
         if(all_slots_used())
@@ -163,17 +164,18 @@ namespace blockudoku
             _combo_streak = 0;
         }
 
-        _score += piece.cell_count + (cleared_cells * 5) + combo_bonus;
+        _score += piece.cell_count + (cleared_cells * 5) + combo_bonus +
+                  (full_board_clear ? full_board_clear_bonus : 0);
 
         if(! has_any_move())
         {
             _game_over = true;
-            return { game_event_type::game_over, cleared_cells };
+            return { game_event_type::game_over, cleared_cells, full_board_clear };
         }
 
         if(cleared_cells > 0)
         {
-            return { game_event_type::cleared, cleared_cells };
+            return { game_event_type::cleared, cleared_cells, full_board_clear };
         }
 
         return { game_event_type::placed, 0 };
@@ -374,6 +376,14 @@ namespace blockudoku
         return changed;
     }
 
+    void game_state::dev_refresh_tray()
+    {
+        refill_slots();
+        _selected_slot = 0;
+        clamp_cursor_to_selected_piece();
+        _game_over = ! has_any_move();
+    }
+
     int game_state::moves_available() const
     {
         int result = 0;
@@ -521,6 +531,22 @@ namespace blockudoku
     bool game_state::has_any_move() const
     {
         return board_rules::has_any_move(_board, _slots, _slot_active);
+    }
+
+    bool game_state::is_board_empty() const
+    {
+        for(int y = 0; y < board_size; ++y)
+        {
+            for(int x = 0; x < board_size; ++x)
+            {
+                if(_board[y][x])
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     void game_state::clamp_cursor_to_selected_piece()

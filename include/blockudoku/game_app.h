@@ -40,6 +40,7 @@ private:
     high_scores _high_scores;
     menu_controller _menu;
     bool _audio_initialized = false;
+    bool _dev_mode = false;
     hint_service _hint_service;
     run_seed_controller _run_seed;
     initials_entry_controller _initials_entry;
