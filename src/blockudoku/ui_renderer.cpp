@@ -93,6 +93,11 @@ namespace blockudoku
         info_screen_renderer::render_high_scores(*this, scores);
     }
 
+    void ui_renderer::render_achievements(const high_scores& scores, int scroll_index)
+    {
+        info_screen_renderer::render_achievements(*this, scores, scroll_index);
+    }
+
     void ui_renderer::render_credits()
     {
         info_screen_renderer::render_credits(*this);

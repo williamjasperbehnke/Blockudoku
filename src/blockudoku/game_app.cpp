@@ -33,6 +33,7 @@ namespace blockudoku
         {
             return bn::keypad::b_pressed() || bn::keypad::select_pressed();
         }
+
     }
 
     void game_app::initialize_audio_once()
@@ -98,6 +99,10 @@ namespace blockudoku
                 update_high_scores();
                 break;
 
+            case scene::achievements:
+                update_achievements();
+                break;
+
             case scene::credits:
                 update_credits();
                 break;
@@ -148,6 +153,13 @@ namespace blockudoku
                 _scene = scene::high_scores;
                 break;
 
+            case menu_controller::action::show_achievements:
+                _achievements_scroll.configure(high_scores::achievements_count, 4);
+                _achievements_scroll.reset();
+                _entry_dpad.reset();
+                _scene = scene::achievements;
+                break;
+
             case menu_controller::action::show_credits:
                 _scene = scene::credits;
                 break;
@@ -178,10 +190,34 @@ namespace blockudoku
     {
         const bool l_down = bn::keypad::l_held() || bn::keypad::l_pressed();
         const bool r_down = bn::keypad::r_held() || bn::keypad::r_pressed();
+        const bool dev_combo = _dev_mode && l_down && r_down;
+
+        if(! dev_combo)
+        {
+            _dev_score_dpad.reset();
+        }
 
         if(l_down && r_down && bn::keypad::select_pressed())
         {
             _dev_mode = ! _dev_mode;
+            _audio.on_event({ game_event_type::slot_changed, 0 });
+            _renderer.render(_state, _dev_mode);
+            return;
+        }
+
+        if(dev_combo && _dev_score_dpad.up())
+        {
+            _state.dev_adjust_score(100);
+            _high_scores.save_game_state(_state);
+            _audio.on_event({ game_event_type::slot_changed, 0 });
+            _renderer.render(_state, _dev_mode);
+            return;
+        }
+
+        if(dev_combo && _dev_score_dpad.down())
+        {
+            _state.dev_adjust_score(-100);
+            _high_scores.save_game_state(_state);
             _audio.on_event({ game_event_type::slot_changed, 0 });
             _renderer.render(_state, _dev_mode);
             return;
@@ -239,6 +275,7 @@ namespace blockudoku
             _renderer.trigger_clear_feedback(event.cleared_cells, event.full_board_clear);
         }
 
+        update_achievement_unlocks(event);
         _renderer.render(_state, _dev_mode);
         _audio.on_event(event);
 
@@ -361,6 +398,28 @@ namespace blockudoku
         _renderer.render_credits();
     }
 
+    void game_app::update_achievements()
+    {
+        _achievements_scroll.configure(high_scores::achievements_count, 4);
+
+        if(_entry_dpad.up())
+        {
+            _achievements_scroll.scroll_up();
+        }
+        else if(_entry_dpad.down())
+        {
+            _achievements_scroll.scroll_down();
+        }
+
+        if(cancel_pressed() || confirm_pressed())
+        {
+            go_to_menu();
+            return;
+        }
+
+        _renderer.render_achievements(_high_scores, _achievements_scroll.index());
+    }
+
     void game_app::update_resume_prompt()
     {
         if(_entry_dpad.up() || _entry_dpad.down() || _entry_dpad.left() || _entry_dpad.right())
@@ -410,5 +469,39 @@ namespace blockudoku
         _high_scores.save_game_state(_state);
         _hint_service.reset();
         _scene = scene::playing;
+    }
+
+    void game_app::update_achievement_unlocks(const game_event& event)
+    {
+        const bool placed_event = event.type == game_event_type::placed || event.type == game_event_type::cleared ||
+                                  event.type == game_event_type::game_over;
+        if(! placed_event)
+        {
+            return;
+        }
+
+        const auto unlock_if = [&](bool condition, high_scores::achievement_id id)
+        {
+            if(condition)
+            {
+                (void) _high_scores.unlock_achievement(id);
+            }
+        };
+
+        (void) _high_scores.unlock_achievement(high_scores::achievement_id::first_move);
+
+        unlock_if(event.cleared_cells >= 9, high_scores::achievement_id::line_clear);
+        unlock_if(event.cleared_cells >= 15, high_scores::achievement_id::big_clear);
+        unlock_if(event.full_board_clear, high_scores::achievement_id::full_clear);
+
+        const int combo_streak = _state.combo_streak();
+        unlock_if(combo_streak >= 3, high_scores::achievement_id::combo_3);
+        unlock_if(combo_streak >= 4, high_scores::achievement_id::combo_4);
+        unlock_if(combo_streak >= 5, high_scores::achievement_id::combo_5);
+
+        const int score = _state.score();
+        unlock_if(score >= 1000, high_scores::achievement_id::score_1000);
+        unlock_if(score >= 2000, high_scores::achievement_id::score_2000);
+        unlock_if(score >= 3000, high_scores::achievement_id::score_3000);
     }
 }

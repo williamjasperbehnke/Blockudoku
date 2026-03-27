@@ -10,6 +10,21 @@ namespace blockudoku
 class high_scores
 {
 public:
+    enum class achievement_id
+    {
+        first_move = 0,
+        line_clear = 1,
+        big_clear = 2,
+        full_clear = 3,
+        combo_3 = 4,
+        combo_4 = 5,
+        combo_5 = 6,
+        score_1000 = 7,
+        score_2000 = 8,
+        score_3000 = 9,
+        count = 10
+    };
+
     struct entry
     {
         char initials[3] = { '-', '-', '-' };
@@ -18,6 +33,7 @@ public:
     };
 
     static constexpr int entries_count = 5;
+    static constexpr int achievements_count = int(achievement_id::count);
 
     high_scores();
 
@@ -32,12 +48,17 @@ public:
     void save_game_state(const game_state& state);
     [[nodiscard]] bool load_saved_game(game_state& state);
     void clear_saved_game();
+    [[nodiscard]] bool achievement_unlocked(int index) const;
+    [[nodiscard]] bool unlock_achievement(achievement_id id);
+    [[nodiscard]] int unlocked_achievements_count() const;
+    [[nodiscard]] static const char* achievement_name(int index);
 
 private:
     struct sram_data
     {
         char tag[8] = {};
         bn::array<entry, entries_count> entries;
+        bool achievement_unlocked[achievements_count] = {};
         bool saved_game_present = false;
         game_state::snapshot saved_game;
     };

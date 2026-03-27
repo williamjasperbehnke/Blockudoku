@@ -3,6 +3,7 @@
 #include "bn_algorithm.h"
 #include "bn_array.h"
 #include "bn_assert.h"
+#include "bn_math.h"
 
 #include "blockudoku/board_rules.h"
 #include "blockudoku/hint_solver.h"
@@ -382,6 +383,11 @@ namespace blockudoku
         _selected_slot = 0;
         clamp_cursor_to_selected_piece();
         _game_over = ! has_any_move();
+    }
+
+    void game_state::dev_adjust_score(int delta)
+    {
+        _score = bn::max(0, _score + delta);
     }
 
     int game_state::moves_available() const

@@ -38,6 +38,7 @@ public:
             const high_scores& scores, int menu_index, int sfx_volume_percent, int music_volume_percent,
             block_style style, palette_style palette, bool assist_enabled);
     void render_high_scores(const high_scores& scores);
+    void render_achievements(const high_scores& scores, int scroll_index);
     void render_credits();
     void render_seed_entry(const char seed_digits[8], int selected_index);
     void render_initials_entry(int score, const char initials[3], int selected_index);

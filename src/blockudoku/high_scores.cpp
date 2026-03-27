@@ -8,6 +8,7 @@ namespace blockudoku
     {
         constexpr char format_tag_v2[8] = { 'B', 'L', 'K', 'D', 'K', '2', 0, 0 };
         constexpr char format_tag_v3[8] = { 'B', 'L', 'K', 'D', 'K', '3', 0, 0 };
+        constexpr char format_tag_v4[8] = { 'B', 'L', 'K', 'D', 'K', '4', 0, 0 };
 
         struct old_sram_data_v2
         {
@@ -15,9 +16,17 @@ namespace blockudoku
             bn::array<high_scores::entry, high_scores::entries_count> entries;
         };
 
+        struct old_sram_data_v3
+        {
+            char tag[8] = {};
+            bn::array<high_scores::entry, high_scores::entries_count> entries;
+            bool saved_game_present = false;
+            game_state::snapshot saved_game;
+        };
+
         [[nodiscard]] bool has_tag(const char tag[8], const char expected_tag[8])
         {
-            for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
+            for(int index = 0; index < int(sizeof(format_tag_v4)); ++index)
             {
                 if(tag[index] != expected_tag[index])
                 {
@@ -123,12 +132,102 @@ namespace blockudoku
         save();
     }
 
+    bool high_scores::achievement_unlocked(int index) const
+    {
+        if(index < 0 || index >= achievements_count)
+        {
+            return false;
+        }
+
+        return _data.achievement_unlocked[index];
+    }
+
+    bool high_scores::unlock_achievement(achievement_id id)
+    {
+        const int index = int(id);
+        if(index < 0 || index >= achievements_count)
+        {
+            return false;
+        }
+
+        if(_data.achievement_unlocked[index])
+        {
+            return false;
+        }
+
+        _data.achievement_unlocked[index] = true;
+        save();
+        return true;
+    }
+
+    int high_scores::unlocked_achievements_count() const
+    {
+        int result = 0;
+        for(bool unlocked : _data.achievement_unlocked)
+        {
+            if(unlocked)
+            {
+                ++result;
+            }
+        }
+        return result;
+    }
+
+    const char* high_scores::achievement_name(int index)
+    {
+        switch(index)
+        {
+            case int(achievement_id::first_move):
+                return "FIRST MOVE";
+            case int(achievement_id::line_clear):
+                return "LINE CLEAR";
+            case int(achievement_id::big_clear):
+                return "BIG CLEAR";
+            case int(achievement_id::full_clear):
+                return "FULL CLEAR";
+            case int(achievement_id::combo_3):
+                return "COMBO 3";
+            case int(achievement_id::combo_4):
+                return "COMBO 4";
+            case int(achievement_id::combo_5):
+                return "COMBO 5";
+            case int(achievement_id::score_1000):
+                return "SCORE 1000";
+            case int(achievement_id::score_2000):
+                return "SCORE 2000";
+            case int(achievement_id::score_3000):
+                return "SCORE 3000";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
     void high_scores::load()
     {
         bn::sram::read(_data);
 
+
+        if(has_tag(_data.tag, format_tag_v4))
+        {
+            return;
+        }
+
         if(has_tag(_data.tag, format_tag_v3))
         {
+            old_sram_data_v3 previous_data;
+            bn::sram::read(previous_data);
+            _data.entries = previous_data.entries;
+            for(int index = 0; index < achievements_count; ++index)
+            {
+                _data.achievement_unlocked[index] = false;
+            }
+            for(int index = 0; index < int(sizeof(format_tag_v4)); ++index)
+            {
+                _data.tag[index] = format_tag_v4[index];
+            }
+            _data.saved_game_present = previous_data.saved_game_present;
+            _data.saved_game = previous_data.saved_game;
+            save();
             return;
         }
 
@@ -137,9 +236,13 @@ namespace blockudoku
             old_sram_data_v2 previous_data;
             bn::sram::read(previous_data);
             _data.entries = previous_data.entries;
-            for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
+            for(int index = 0; index < achievements_count; ++index)
             {
-                _data.tag[index] = format_tag_v3[index];
+                _data.achievement_unlocked[index] = false;
+            }
+            for(int index = 0; index < int(sizeof(format_tag_v4)); ++index)
+            {
+                _data.tag[index] = format_tag_v4[index];
             }
             _data.saved_game_present = false;
             _data.saved_game = {};
@@ -158,9 +261,9 @@ namespace blockudoku
 
     void high_scores::set_default_entries()
     {
-        for(int index = 0; index < int(sizeof(format_tag_v3)); ++index)
+        for(int index = 0; index < int(sizeof(format_tag_v4)); ++index)
         {
-            _data.tag[index] = format_tag_v3[index];
+            _data.tag[index] = format_tag_v4[index];
         }
 
         for(entry& score_entry : _data.entries)
@@ -170,6 +273,11 @@ namespace blockudoku
             score_entry.initials[2] = '-';
             score_entry.score = 0;
             score_entry.seed = 0;
+        }
+
+        for(int index = 0; index < achievements_count; ++index)
+        {
+            _data.achievement_unlocked[index] = false;
         }
 
         _data.saved_game_present = false;

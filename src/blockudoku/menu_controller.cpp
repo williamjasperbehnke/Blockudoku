@@ -77,6 +77,10 @@ namespace blockudoku
                     result.next_action = action::show_high_scores;
                     break;
 
+                case entry::achievements:
+                    result.next_action = action::show_achievements;
+                    break;
+
                 case entry::credits:
                     result.next_action = action::show_credits;
                     break;
@@ -183,6 +187,7 @@ namespace blockudoku
 
             case entry::start_game:
             case entry::high_scores:
+            case entry::achievements:
             case entry::credits:
             case entry::count:
                 break;

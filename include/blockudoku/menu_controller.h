@@ -19,6 +19,7 @@ public:
         start_game,
         open_seed_entry,
         show_high_scores,
+        show_achievements,
         show_credits
     };
 
@@ -45,13 +46,14 @@ private:
     {
         start_game = 0,
         high_scores = 1,
-        credits = 2,
-        sfx_volume = 3,
-        music_volume = 4,
-        blocks = 5,
-        palette = 6,
-        assist = 7,
-        count = 8
+        achievements = 2,
+        credits = 3,
+        sfx_volume = 4,
+        music_volume = 5,
+        blocks = 6,
+        palette = 7,
+        assist = 8,
+        count = 9
     };
 
     int _menu_index = 0;

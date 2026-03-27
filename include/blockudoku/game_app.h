@@ -10,6 +10,7 @@
 #include "blockudoku/input_controller.h"
 #include "blockudoku/menu_controller.h"
 #include "blockudoku/run_seed_controller.h"
+#include "blockudoku/scrollable.h"
 #include "blockudoku/ui_renderer.h"
 
 namespace blockudoku
@@ -29,6 +30,7 @@ private:
         enter_seed,
         enter_initials,
         high_scores,
+        achievements,
         credits
     };
 
@@ -45,8 +47,10 @@ private:
     run_seed_controller _run_seed;
     initials_entry_controller _initials_entry;
     dpad_repeater _entry_dpad;
+    dpad_repeater _dev_score_dpad;
     int _pending_score = 0;
     unsigned _pending_seed = 0;
+    scrollable _achievements_scroll;
     int _resume_prompt_index = 0;
     scene _resume_prompt_return_scene = scene::menu;
 
@@ -61,9 +65,11 @@ private:
     void update_enter_seed();
     void update_enter_initials();
     void update_high_scores();
+    void update_achievements();
     void update_credits();
     void start_game_with_seed(unsigned seed);
     void start_game();
+    void update_achievement_unlocks(const game_event& event);
 };
 
 }

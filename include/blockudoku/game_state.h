@@ -71,6 +71,7 @@ public:
     [[nodiscard]] bool apply_hint_move(int slot_index, int base_x, int base_y);
     [[nodiscard]] bool cycle_hint_move();
     void dev_refresh_tray();
+    void dev_adjust_score(int delta);
 
     [[nodiscard]] int moves_available() const;
     [[nodiscard]] snapshot make_snapshot() const;
